@@ -1,0 +1,14 @@
+__pycache__
+app.egg-info
+*.pyc
+.mypy_cache
+.coverage
+htmlcov
+.cache
+.venv
+.idea
+
+.env
+.env.production
+/src/tests/test.db
+/src/tests/api_v1/test.db
