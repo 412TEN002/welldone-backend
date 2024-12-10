@@ -7,7 +7,7 @@ from sqlmodel import Session, select
 
 from api.v1.router import api_router
 from core.config import settings
-from core.database import engine
+from core.database import engine, init_db
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     try:
         with Session(engine) as session:
             session.exec(select(1))
-            # await init_db(session, engine)
+            await init_db(session, engine)
     except Exception as e:
         logger.error(e)
         raise e
@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(
-    title=settings.PROJECT_NAME,
+    title="Welldone API",
     openapi_url=f"{settings.API_V1_STR}/openapi.json",
     generate_unique_id_function=custom_generate_unique_id,
     lifespan=lifespan,
