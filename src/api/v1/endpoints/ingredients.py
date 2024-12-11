@@ -1,9 +1,9 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import select
+from fastapi import APIRouter, HTTPException, Query, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import Ingredient, IngredientNutritionLink, NutritionTag
 from models.response import IngredientResponse
 
@@ -11,7 +11,7 @@ router = APIRouter()
 
 
 @router.post("/", response_model=Ingredient)
-def create_ingredient(*, session: SessionDep, ingredient: Ingredient):
+def create_ingredient(*, session: Session = Depends(get_session), ingredient: Ingredient):
     session.add(ingredient)
     session.commit()
     session.refresh(ingredient)
@@ -21,7 +21,7 @@ def create_ingredient(*, session: SessionDep, ingredient: Ingredient):
 @router.get("/", response_model=List[IngredientResponse])
 def read_ingredients(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
 ):
@@ -30,7 +30,7 @@ def read_ingredients(
 
 
 @router.get("/{ingredient_id}", response_model=IngredientResponse)
-def read_ingredient(*, session: SessionDep, ingredient_id: int):
+def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: int):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -39,7 +39,7 @@ def read_ingredient(*, session: SessionDep, ingredient_id: int):
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
 def update_ingredient(
-        *, session: SessionDep, ingredient_id: int, ingredient: Ingredient
+        *, session: Session = Depends(get_session), ingredient_id: int, ingredient: Ingredient
 ):
     db_ingredient = session.get(Ingredient, ingredient_id)
     if not db_ingredient:
@@ -56,7 +56,7 @@ def update_ingredient(
 
 
 @router.delete("/{ingredient_id}")
-def delete_ingredient(*, session: SessionDep, ingredient_id: int):
+def delete_ingredient(*, session: Session = Depends(get_session), ingredient_id: int):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -69,7 +69,7 @@ def delete_ingredient(*, session: SessionDep, ingredient_id: int):
 @router.post("/{ingredient_id}/tags/{tag_id}")
 def add_nutrition_tag(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         ingredient_id: int,
         tag_id: int
 ):
@@ -124,7 +124,7 @@ def add_nutrition_tag(
 @router.delete("/{ingredient_id}/tags/{tag_id}")
 def remove_nutrition_tag(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         ingredient_id: int,
         tag_id: int
 ):
@@ -153,7 +153,7 @@ def remove_nutrition_tag(
 @router.get("/{ingredient_id}/tags", response_model=List[NutritionTag])
 def read_ingredient_nutrition_tags(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         ingredient_id: int
 ):
     # 재료 확인

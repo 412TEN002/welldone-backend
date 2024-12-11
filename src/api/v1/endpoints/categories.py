@@ -1,16 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Query
-from sqlmodel import select
+from fastapi import APIRouter, HTTPException, Query, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import Category
 
 router = APIRouter()
 
 
 @router.post("/", response_model=Category)
-def create_category(*, session: SessionDep, category: Category):
+def create_category(*, session: Session = Depends(get_session), category: Category):
     session.add(category)
     session.commit()
     session.refresh(category)
@@ -20,7 +20,7 @@ def create_category(*, session: SessionDep, category: Category):
 @router.get("/", response_model=List[Category])
 def read_categories(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
 ):
@@ -29,7 +29,7 @@ def read_categories(
 
 
 @router.get("/{category_id}", response_model=Category)
-def read_category(*, session: SessionDep, category_id: int):
+def read_category(*, session: Session = Depends(get_session), category_id: int):
     category = session.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
@@ -38,7 +38,7 @@ def read_category(*, session: SessionDep, category_id: int):
 
 @router.patch("/{category_id}", response_model=Category)
 def update_category(
-        *, session: SessionDep, category_id: int, category: Category
+        *, session: Session = Depends(get_session), category_id: int, category: Category
 ):
     db_category = session.get(Category, category_id)
     if not db_category:
@@ -55,7 +55,7 @@ def update_category(
 
 
 @router.delete("/{category_id}")
-def delete_category(*, session: SessionDep, category_id: int):
+def delete_category(*, session: Session = Depends(get_session), category_id: int):
     category = session.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")

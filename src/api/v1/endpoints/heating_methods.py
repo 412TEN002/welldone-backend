@@ -1,16 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Query, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter, Query, HTTPException, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import HeatingMethod
 
 router = APIRouter()
 
 
 @router.post("/", response_model=HeatingMethod)
-def create_heating_method(*, session: SessionDep, heating_method: HeatingMethod):
+def create_heating_method(*, session: Session = Depends(get_session), heating_method: HeatingMethod):
     session.add(heating_method)
     session.commit()
     session.refresh(heating_method)
@@ -20,7 +20,7 @@ def create_heating_method(*, session: SessionDep, heating_method: HeatingMethod)
 @router.get("/", response_model=List[HeatingMethod])
 def read_heating_methods(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
 ):
@@ -29,7 +29,7 @@ def read_heating_methods(
 
 
 @router.get("/{method_id}", response_model=HeatingMethod)
-def read_heating_method(*, session: SessionDep, method_id: int):
+def read_heating_method(*, session: Session = Depends(get_session), method_id: int):
     method = session.get(HeatingMethod, method_id)
     if not method:
         raise HTTPException(status_code=404, detail="Heating method not found")
@@ -38,7 +38,7 @@ def read_heating_method(*, session: SessionDep, method_id: int):
 
 @router.patch("/{method_id}", response_model=HeatingMethod)
 def update_heating_method(
-        *, session: SessionDep, method_id: int, heating_method: HeatingMethod
+        *, session: Session = Depends(get_session), method_id: int, heating_method: HeatingMethod
 ):
     db_method = session.get(HeatingMethod, method_id)
     if not db_method:
@@ -55,7 +55,7 @@ def update_heating_method(
 
 
 @router.delete("/{method_id}")
-def delete_heating_method(*, session: SessionDep, method_id: int):
+def delete_heating_method(*, session: Session = Depends(get_session), method_id: int):
     method = session.get(HeatingMethod, method_id)
     if not method:
         raise HTTPException(status_code=404, detail="Heating method not found")

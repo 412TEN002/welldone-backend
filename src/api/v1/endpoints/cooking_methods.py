@@ -1,16 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Query, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter, Query, HTTPException, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import CookingMethod
 
 router = APIRouter()
 
 
 @router.post("/", response_model=CookingMethod)
-def create_cooking_method(*, session: SessionDep, cooking_method: CookingMethod):
+def create_cooking_method(*, session: Session = Depends(get_session), cooking_method: CookingMethod):
     session.add(cooking_method)
     session.commit()
     session.refresh(cooking_method)
@@ -20,7 +20,7 @@ def create_cooking_method(*, session: SessionDep, cooking_method: CookingMethod)
 @router.get("/", response_model=List[CookingMethod])
 def read_cooking_methods(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
 ):
@@ -29,7 +29,7 @@ def read_cooking_methods(
 
 
 @router.get("/{method_id}", response_model=CookingMethod)
-def read_cooking_method(*, session: SessionDep, method_id: int):
+def read_cooking_method(*, session: Session = Depends(get_session), method_id: int):
     method = session.get(CookingMethod, method_id)
     if not method:
         raise HTTPException(status_code=404, detail="Cooking method not found")
@@ -38,7 +38,7 @@ def read_cooking_method(*, session: SessionDep, method_id: int):
 
 @router.patch("/{method_id}", response_model=CookingMethod)
 def update_cooking_method(
-        *, session: SessionDep, method_id: int, cooking_method: CookingMethod
+        *, session: Session = Depends(get_session), method_id: int, cooking_method: CookingMethod
 ):
     db_method = session.get(CookingMethod, method_id)
     if not db_method:
@@ -55,7 +55,7 @@ def update_cooking_method(
 
 
 @router.delete("/{method_id}")
-def delete_cooking_method(*, session: SessionDep, method_id: int):
+def delete_cooking_method(*, session: Session = Depends(get_session), method_id: int):
     method = session.get(CookingMethod, method_id)
     if not method:
         raise HTTPException(status_code=404, detail="Cooking method not found")

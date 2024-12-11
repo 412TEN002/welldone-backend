@@ -1,16 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Query, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter, Query, HTTPException, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import Timer
 
 router = APIRouter()
 
 
 @router.post("/", response_model=Timer)
-def create_timer(timer: Timer, session: SessionDep):
+def create_timer(timer: Timer, session: Session = Depends(get_session)):
     session.add(timer)
     session.commit()
     session.refresh(timer)
@@ -19,7 +19,7 @@ def create_timer(timer: Timer, session: SessionDep):
 
 @router.get("/", response_model=List[Timer])
 def read_timers(
-        session: SessionDep,
+        session: Session = Depends(get_session),
         skip: int = 0,
         limit: int = Query(default=100, le=100),
 ):
@@ -28,7 +28,7 @@ def read_timers(
 
 
 @router.get("/{timer_id}", response_model=Timer)
-def read_timer(timer_id: int, session: SessionDep):
+def read_timer(timer_id: int, session: Session = Depends(get_session)):
     timer = session.get(Timer, timer_id)
     if not timer:
         raise HTTPException(status_code=404, detail="Timer not found")
@@ -39,7 +39,7 @@ def read_timer(timer_id: int, session: SessionDep):
 def update_timer(
         timer_id: int,
         timer_update: Timer,
-        session: SessionDep
+        session: Session = Depends(get_session)
 ):
     db_timer = session.get(Timer, timer_id)
     if not db_timer:
@@ -56,7 +56,7 @@ def update_timer(
 
 
 @router.delete("/{timer_id}")
-def delete_timer(timer_id: int, session: SessionDep):
+def delete_timer(timer_id: int, session: Session = Depends(get_session)):
     timer = session.get(Timer, timer_id)
     if not timer:
         raise HTTPException(status_code=404, detail="Timer not found")

@@ -13,7 +13,10 @@ sqlmodel = "^0.0.22"
 python-dateutil = "^2.9.0.post0"
 alembic = "^1.14.0"
 pydantic-settings = "^2.6.1"
-
+passlib = { extras = ["bcrypt"], version = "^1.7.4" }
+pyjwt = "^2.10.1"
+pydantic = {extras = ["email"], version = "^2.10.3"}
+python-multipart = "^0.0.19"
 
 [build-system]
 requires = ["poetry-core"]

@@ -1,4 +1,3 @@
-import secrets
 from pathlib import Path
 from typing import Literal
 
@@ -17,7 +16,8 @@ class Settings(BaseSettings):
     )
     ENVIRONMENT: Literal["test", "local", "staging", "production"] = "local"
     API_V1_STR: str = "/api/v1"
-    SECRET_KEY: str = secrets.token_urlsafe(32)
+    SECRET_KEY: str = "SECRET_KEY"
+    ALGORITHM: str = "HS256"
 
     # POSTGRES_SERVER: str
     # POSTGRES_PORT: int = 5432

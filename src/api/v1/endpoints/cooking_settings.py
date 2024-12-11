@@ -1,16 +1,16 @@
 from typing import List
 
-from fastapi import APIRouter, Query, HTTPException
-from sqlmodel import select
+from fastapi import APIRouter, Query, HTTPException, Depends
+from sqlmodel import select, Session
 
-from api.v1.deps import SessionDep
+from api.v1.deps import get_session
 from models.common import CookingSetting, CookingSettingTip
 
 router = APIRouter()
 
 
 @router.post("/", response_model=CookingSetting)
-def create_cooking_setting(*, session: SessionDep, cooking_setting: CookingSetting):
+def create_cooking_setting(*, session: Session = Depends(get_session), cooking_setting: CookingSetting):
     session.add(cooking_setting)
     session.commit()
     session.refresh(cooking_setting)
@@ -20,7 +20,7 @@ def create_cooking_setting(*, session: SessionDep, cooking_setting: CookingSetti
 @router.get("/", response_model=List[CookingSetting])
 def read_cooking_settings(
         *,
-        session: SessionDep,
+        session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
 ):
@@ -29,7 +29,7 @@ def read_cooking_settings(
 
 
 @router.get("/{cooking_setting_id}", response_model=CookingSetting)
-def read_cooking_setting(*, session: SessionDep, cooking_setting_id: int):
+def read_cooking_setting(*, session: Session = Depends(get_session), cooking_setting_id: int):
     setting = session.get(CookingSetting, cooking_setting_id)
     if not setting:
         raise HTTPException(status_code=404, detail="Cooking setting not found")
@@ -38,7 +38,7 @@ def read_cooking_setting(*, session: SessionDep, cooking_setting_id: int):
 
 @router.patch("/{cooking_setting_id}", response_model=CookingSetting)
 def update_cooking_setting(
-        *, session: SessionDep, cooking_setting_id: int, cooking_setting: CookingSetting
+        *, session: Session = Depends(get_session), cooking_setting_id: int, cooking_setting: CookingSetting
 ):
     db_setting = session.get(CookingSetting, cooking_setting_id)
     if not db_setting:
@@ -55,7 +55,7 @@ def update_cooking_setting(
 
 
 @router.delete("/{cooking_setting_id}")
-def delete_cooking_setting(*, session: SessionDep, cooking_setting_id: int):
+def delete_cooking_setting(*, session: Session = Depends(get_session), cooking_setting_id: int):
     setting = session.get(CookingSetting, cooking_setting_id)
     if not setting:
         raise HTTPException(status_code=404, detail="Cooking setting not found")
@@ -69,7 +69,7 @@ def delete_cooking_setting(*, session: SessionDep, cooking_setting_id: int):
 def create_cooking_setting_tip(
         cooking_setting_id: int,
         tip: CookingSettingTip,
-        session: SessionDep
+        session: Session = Depends(get_session)
 ):
     cooking_setting = session.get(CookingSetting, cooking_setting_id)
     if not cooking_setting:
@@ -84,10 +84,10 @@ def create_cooking_setting_tip(
 
 @router.get("/{cooking_setting_id}/tips", response_model=List[CookingSettingTip])
 def read_cooking_setting_tips(
-        session: SessionDep,
         cooking_setting_id: int,
         skip: int = 0,
         limit: int = Query(default=100, le=100),
+        session: Session = Depends(get_session),
 ):
     cooking_setting = session.get(CookingSetting, cooking_setting_id)
     if not cooking_setting:
@@ -106,7 +106,7 @@ def read_cooking_setting_tips(
 def read_cooking_setting_tip(
         cooking_setting_id: int,
         tip_id: int,
-        session: SessionDep
+        session: Session = Depends(get_session)
 ):
     tip = session.exec(
         select(CookingSettingTip)
@@ -126,7 +126,7 @@ def update_cooking_setting_tip(
         cooking_setting_id: int,
         tip_id: int,
         tip_update: CookingSettingTip,
-        session: SessionDep
+        session: Session = Depends(get_session)
 ):
     tip = session.exec(
         select(CookingSettingTip)
@@ -154,7 +154,7 @@ def update_cooking_setting_tip(
 def delete_cooking_setting_tip(
         cooking_setting_id: int,
         tip_id: int,
-        session: SessionDep
+        session: Session = Depends(get_session)
 ):
     tip = session.exec(
         select(CookingSettingTip)
