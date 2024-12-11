@@ -1,5 +1,6 @@
 from typing import Dict, Set
 
+from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
 from models.common import (
@@ -10,9 +11,9 @@ from models.common import (
 cooking_settings_data = [
     {
         "ingredient": "가지",
-        "cooking_method": "굽기",
-        "cooking_tool": "프라이팬",
-        "heating_method": "인덕션",
+        "cooking_method": "찌기",
+        "cooking_tool": "냄비/프라이팬",
+        "heating_method": "인덕션/가스레인지",
         "temperature": "6",
         "cooking_time": "180",
         "tips": [
@@ -109,7 +110,10 @@ def seed_cooking_settings(session: Session):
 
 
 if __name__ == "__main__":
-    from database import SessionLocal
+    # SQLite database URL
+    engine = create_engine(
+        "sqlite:///test.db", connect_args={"check_same_thread": False}
+    )
 
-    session = SessionLocal()
-    seed_cooking_settings(session)
+    with Session(engine) as session:
+        seed_cooking_settings(session)

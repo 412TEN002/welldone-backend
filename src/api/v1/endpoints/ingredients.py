@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlmodel import select, Session
@@ -7,8 +7,44 @@ from api.v1.deps import get_session, get_current_superuser
 from models.common import Ingredient, IngredientNutritionLink, NutritionTag
 from models.response import IngredientResponse
 from models.user import User
+from utils.utils import is_chosung
 
 router = APIRouter()
+
+
+@router.get("/search", response_model=List[IngredientResponse])
+def search_ingredients(
+        *,
+        session: Session = Depends(get_session),
+        keyword: str = Query(..., min_length=1),
+        category_id: Optional[int] = None,
+        skip: int = 0,
+        limit: int = Query(default=100, lte=100),
+):
+    """
+    재료를 검색합니다.
+    - 일반 검색과 초성 검색을 모두 지원합니다.
+    - 카테고리로 필터링할 수 있습니다.
+    """
+    query = select(Ingredient)
+
+    # 검색어 처리
+    if keyword:
+        if is_chosung(keyword):
+            # DB에 저장된 초성 정보를 이용해 검색
+            query = query.where(Ingredient.chosung.contains(keyword))
+        else:
+            # 일반 검색어는 이름으로 검색
+            query = query.where(Ingredient.name.contains(keyword))
+
+    # 카테고리 필터링
+    if category_id is not None:
+        query = query.where(Ingredient.category_id == category_id)
+
+    # 페이지네이션 적용
+    query = query.offset(skip).limit(limit)
+
+    return session.exec(query).all()
 
 
 @router.post("/", response_model=Ingredient)

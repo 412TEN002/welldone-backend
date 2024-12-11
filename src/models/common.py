@@ -2,6 +2,8 @@ from typing import Optional, List
 
 from sqlmodel import SQLModel, Field, Relationship
 
+from utils.utils import get_chosung
+
 
 class Category(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -42,6 +44,7 @@ class NutritionTag(SQLModel, table=True):
 class Ingredient(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
+    chosung: str = Field(index=True)
     category_id: Optional[int] = Field(default=None, foreign_key="category.id")
 
     # Relationships
@@ -51,6 +54,12 @@ class Ingredient(SQLModel, table=True):
         back_populates="ingredients",
         link_model=IngredientNutritionLink
     )
+
+    def __init__(self, **data):
+        # name이 제공되면 자동으로 초성 생성
+        if 'name' in data and 'chosung' not in data:
+            data['chosung'] = get_chosung(data['name'])
+        super().__init__(**data)
 
 
 class CookingMethod(SQLModel, table=True):
