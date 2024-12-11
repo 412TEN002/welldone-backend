@@ -1,6 +1,7 @@
 from typing import List
 
 from fastapi import APIRouter, Query, HTTPException, Depends
+from sqlalchemy.orm import selectinload
 from sqlmodel import select, Session
 
 from api.v1.deps import get_session, get_current_superuser
@@ -19,23 +20,46 @@ def create_cooking_setting(*, session: Session = Depends(get_session), cooking_s
     return cooking_setting
 
 
-@router.get("/", response_model=List[CookingSetting])
-def read_cooking_settings(
+@router.get("/")
+def read_cooking_settings_with_tips(
         *,
         session: Session = Depends(get_session),
-        offset: int = 0,
-        limit: int = Query(default=100, lte=100),
+        ingredient_id: int,
+        cooking_method_id: int,
+        cooking_tool_id: int,
+        heating_method_id: int
 ):
-    settings = session.exec(select(CookingSetting).offset(offset).limit(limit)).all()
-    return settings
+    """
+    조리 설정과 관련된 팁을 함께 조회합니다.
+    선택적으로 재료, 조리방법, 조리도구, 가열방법으로 필터링할 수 있습니다.
+    """
+    query = (
+        select(CookingSetting)
+        .options(selectinload(CookingSetting.tips))
+        .where(CookingSetting.ingredient_id == ingredient_id)
+        .where(CookingSetting.cooking_method_id == cooking_method_id)
+        .where(CookingSetting.cooking_tool_id == cooking_tool_id)
+        .where(CookingSetting.heating_method_id == heating_method_id)
+    )
 
+    settings = session.exec(query).all()
 
-@router.get("/{cooking_setting_id}", response_model=CookingSetting)
-def read_cooking_setting(*, session: Session = Depends(get_session), cooking_setting_id: int):
-    setting = session.get(CookingSetting, cooking_setting_id)
-    if not setting:
-        raise HTTPException(status_code=404, detail="Cooking setting not found")
-    return setting
+    # 응답 포맷 조정
+    result = []
+    for setting in settings:
+        setting_dict = {
+            "id": setting.id,
+            "ingredient_id": setting.ingredient_id,
+            "cooking_method_id": setting.cooking_method_id,
+            "cooking_tool_id": setting.cooking_tool_id,
+            "heating_method_id": setting.heating_method_id,
+            "temperature": setting.temperature,
+            "cooking_time": setting.cooking_time,
+            "tips": [{"id": tip.id, "message": tip.message} for tip in setting.tips]
+        }
+        result.append(setting_dict)
+
+    return result
 
 
 @router.patch("/{cooking_setting_id}", response_model=CookingSetting)
