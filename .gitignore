@@ -7,7 +7,6 @@ htmlcov
 .cache
 .venv
 .idea
-test.db
 
 .env
 .env.production
