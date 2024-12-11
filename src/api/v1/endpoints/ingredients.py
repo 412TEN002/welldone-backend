@@ -3,15 +3,17 @@ from typing import List
 from fastapi import APIRouter, HTTPException, Query, Depends
 from sqlmodel import select, Session
 
-from api.v1.deps import get_session
+from api.v1.deps import get_session, get_current_superuser
 from models.common import Ingredient, IngredientNutritionLink, NutritionTag
 from models.response import IngredientResponse
+from models.user import User
 
 router = APIRouter()
 
 
 @router.post("/", response_model=Ingredient)
-def create_ingredient(*, session: Session = Depends(get_session), ingredient: Ingredient):
+def create_ingredient(*, session: Session = Depends(get_session), ingredient: Ingredient,
+                      current_user: User = Depends(get_current_superuser)):
     session.add(ingredient)
     session.commit()
     session.refresh(ingredient)
@@ -39,7 +41,8 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
 def update_ingredient(
-        *, session: Session = Depends(get_session), ingredient_id: int, ingredient: Ingredient
+        *, session: Session = Depends(get_session), ingredient_id: int, ingredient: Ingredient,
+        current_user: User = Depends(get_current_superuser)
 ):
     db_ingredient = session.get(Ingredient, ingredient_id)
     if not db_ingredient:
@@ -56,7 +59,8 @@ def update_ingredient(
 
 
 @router.delete("/{ingredient_id}")
-def delete_ingredient(*, session: Session = Depends(get_session), ingredient_id: int):
+def delete_ingredient(*, session: Session = Depends(get_session), ingredient_id: int,
+                      current_user: User = Depends(get_current_superuser)):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -71,7 +75,8 @@ def add_nutrition_tag(
         *,
         session: Session = Depends(get_session),
         ingredient_id: int,
-        tag_id: int
+        tag_id: int,
+        current_user: User = Depends(get_current_superuser)
 ):
     # 재료 확인
     ingredient = session.get(Ingredient, ingredient_id)
@@ -126,7 +131,8 @@ def remove_nutrition_tag(
         *,
         session: Session = Depends(get_session),
         ingredient_id: int,
-        tag_id: int
+        tag_id: int,
+        current_user: User = Depends(get_current_superuser)
 ):
     # 연결 확인
     link = session.exec(

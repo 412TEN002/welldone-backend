@@ -88,7 +88,7 @@ async def read_current_user(
 async def read_users(
         skip: int = 0,
         limit: int = 100,
-        current_user: User = Depends(get_current_superuser),  # Only superuser can list users
+        current_user: User = Depends(get_current_superuser),
         session: Session = Depends(get_session)
 ) -> List[UserResponse]:
     users = session.exec(select(User).offset(skip).limit(limit)).all()
@@ -98,7 +98,7 @@ async def read_users(
 @router.get("/{user_id}", response_model=UserResponse)
 async def read_user(
         user_id: int,
-        current_user: User = Depends(get_current_superuser),  # Only superuser can read user details
+        current_user: User = Depends(get_current_superuser),
         session: Session = Depends(get_session)
 ) -> User:
     user = session.get(User, user_id)
@@ -114,7 +114,7 @@ async def read_user(
 async def update_user(
         user_id: int,
         user_in: UserUpdate,
-        current_user: User = Depends(get_current_superuser),  # Only superuser can update users
+        current_user: User = Depends(get_current_superuser),
         session: Session = Depends(get_session)
 ) -> User:
     db_user = session.get(User, user_id)

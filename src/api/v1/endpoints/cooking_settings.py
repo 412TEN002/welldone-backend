@@ -3,14 +3,16 @@ from typing import List
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlmodel import select, Session
 
-from api.v1.deps import get_session
+from api.v1.deps import get_session, get_current_superuser
 from models.common import CookingSetting, CookingSettingTip
+from models.user import User
 
 router = APIRouter()
 
 
 @router.post("/", response_model=CookingSetting)
-def create_cooking_setting(*, session: Session = Depends(get_session), cooking_setting: CookingSetting):
+def create_cooking_setting(*, session: Session = Depends(get_session), cooking_setting: CookingSetting,
+                           current_user: User = Depends(get_current_superuser)):
     session.add(cooking_setting)
     session.commit()
     session.refresh(cooking_setting)
@@ -38,7 +40,8 @@ def read_cooking_setting(*, session: Session = Depends(get_session), cooking_set
 
 @router.patch("/{cooking_setting_id}", response_model=CookingSetting)
 def update_cooking_setting(
-        *, session: Session = Depends(get_session), cooking_setting_id: int, cooking_setting: CookingSetting
+        *, session: Session = Depends(get_session), cooking_setting_id: int, cooking_setting: CookingSetting,
+        current_user: User = Depends(get_current_superuser)
 ):
     db_setting = session.get(CookingSetting, cooking_setting_id)
     if not db_setting:
@@ -55,7 +58,8 @@ def update_cooking_setting(
 
 
 @router.delete("/{cooking_setting_id}")
-def delete_cooking_setting(*, session: Session = Depends(get_session), cooking_setting_id: int):
+def delete_cooking_setting(*, session: Session = Depends(get_session), cooking_setting_id: int,
+                           current_user: User = Depends(get_current_superuser)):
     setting = session.get(CookingSetting, cooking_setting_id)
     if not setting:
         raise HTTPException(status_code=404, detail="Cooking setting not found")
@@ -69,7 +73,8 @@ def delete_cooking_setting(*, session: Session = Depends(get_session), cooking_s
 def create_cooking_setting_tip(
         cooking_setting_id: int,
         tip: CookingSettingTip,
-        session: Session = Depends(get_session)
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_superuser)
 ):
     cooking_setting = session.get(CookingSetting, cooking_setting_id)
     if not cooking_setting:
@@ -126,7 +131,8 @@ def update_cooking_setting_tip(
         cooking_setting_id: int,
         tip_id: int,
         tip_update: CookingSettingTip,
-        session: Session = Depends(get_session)
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_superuser)
 ):
     tip = session.exec(
         select(CookingSettingTip)
@@ -154,7 +160,8 @@ def update_cooking_setting_tip(
 def delete_cooking_setting_tip(
         cooking_setting_id: int,
         tip_id: int,
-        session: Session = Depends(get_session)
+        session: Session = Depends(get_session),
+        current_user: User = Depends(get_current_superuser)
 ):
     tip = session.exec(
         select(CookingSettingTip)

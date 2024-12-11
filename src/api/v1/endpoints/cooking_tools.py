@@ -3,14 +3,16 @@ from typing import List
 from fastapi import APIRouter, Query, HTTPException, Depends
 from sqlmodel import select, Session
 
-from api.v1.deps import get_session
+from api.v1.deps import get_session, get_current_superuser
 from models.common import CookingTool
+from models.user import User
 
 router = APIRouter()
 
 
 @router.post("/", response_model=CookingTool)
-def create_cooking_tool(*, session: Session = Depends(get_session), cooking_tool: CookingTool):
+def create_cooking_tool(*, session: Session = Depends(get_session), cooking_tool: CookingTool,
+                        current_user: User = Depends(get_current_superuser)):
     session.add(cooking_tool)
     session.commit()
     session.refresh(cooking_tool)
@@ -38,7 +40,8 @@ def read_cooking_tool(*, session: Session = Depends(get_session), tool_id: int):
 
 @router.patch("/{tool_id}", response_model=CookingTool)
 def update_cooking_tool(
-        *, session: Session = Depends(get_session), tool_id: int, cooking_tool: CookingTool
+        *, session: Session = Depends(get_session), tool_id: int, cooking_tool: CookingTool,
+        current_user: User = Depends(get_current_superuser)
 ):
     db_tool = session.get(CookingTool, tool_id)
     if not db_tool:
@@ -55,7 +58,8 @@ def update_cooking_tool(
 
 
 @router.delete("/{tool_id}")
-def delete_cooking_tool(*, session: Session = Depends(get_session), tool_id: int):
+def delete_cooking_tool(*, session: Session = Depends(get_session), tool_id: int,
+                        current_user: User = Depends(get_current_superuser)):
     tool = session.get(CookingTool, tool_id)
     if not tool:
         raise HTTPException(status_code=404, detail="Cooking tool not found")
