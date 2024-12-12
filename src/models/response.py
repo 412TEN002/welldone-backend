@@ -27,6 +27,7 @@ class CookingSettingResponse(BaseModel):
 class IngredientResponse(BaseModel):
     id: int
     name: str
+    icon_url: Optional[str] = None
     category: Optional[CategoryResponse] = None
     cooking_settings: List[CookingSettingResponse] = []
     nutrition_tags: List[NutritionTagResponse] = []

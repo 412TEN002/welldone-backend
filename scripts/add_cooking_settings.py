@@ -12,8 +12,8 @@ cooking_settings_data = [
     {
         "ingredient": "가지",
         "cooking_method": "찌기",
-        "cooking_tool": "냄비/프라이팬",
-        "heating_method": "인덕션/가스레인지",
+        "cooking_tool": "냄비 / 프라이팬",
+        "heating_method": "인덕션 / 가스레인지",
         "temperature": "6",
         "cooking_time": "180",
         "tips": [

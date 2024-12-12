@@ -18,7 +18,7 @@ def get_session() -> Generator[Session, None, None]:
 
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.API_V1_STR + "/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=settings.API_V1_STR + "/auth/login")
 
 
 def create_access_token(data: dict) -> str:

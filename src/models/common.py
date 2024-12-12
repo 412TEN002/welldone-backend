@@ -46,6 +46,7 @@ class Ingredient(SQLModel, table=True):
     name: str = Field(unique=True)
     chosung: str = Field(index=True)
     category_id: Optional[int] = Field(default=None, foreign_key="category.id")
+    icon_url: Optional[str] = None
 
     # Relationships
     category: Optional["Category"] = Relationship(back_populates="ingredients")

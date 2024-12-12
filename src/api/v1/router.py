@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from api.v1.endpoints.auth import router as auth_router
 from api.v1.endpoints.categories import router as categories_router
 from api.v1.endpoints.cooking_methods import router as cooking_methods_router
 from api.v1.endpoints.cooking_settings import router as cooking_settings_router
@@ -22,3 +23,4 @@ api_router.include_router(heating_methods_router, prefix="/heating-methods", tag
 api_router.include_router(timers_router, prefix="/timers", tags=["timers"])
 api_router.include_router(cooking_settings_router, prefix="/cooking-settings", tags=["cooking-settings"])
 api_router.include_router(users_router, prefix="/users", tags=["users"])
+api_router.include_router(auth_router, prefix="/auth", tags=["auth"])
