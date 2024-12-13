@@ -3,32 +3,110 @@ from sqlmodel import Session, create_engine
 from models.common import Category, Ingredient, NutritionTag, IngredientNutritionLink
 
 # SQLite database URL
-engine = create_engine(
-    "sqlite:///test.db", connect_args={"check_same_thread": False}
-)
+engine = create_engine("sqlite:///test.db", connect_args={"check_same_thread": False})
 
 # Vegetable data with nutrition tags
 vegetables_data = [
-    {"name": "가지", "category": "열매채소", "nutrition_tags": ["비타민C", "칼륨", "식이섬유"]},
-    {"name": "감자", "category": "뿌리채소", "nutrition_tags": ["비타민C", "칼륨", "탄수화물"]},
-    {"name": "고구마", "category": "뿌리채소", "nutrition_tags": ["베타카로틴", "비타민C", "식이섬유"]},
-    {"name": "단호박", "category": "열매채소", "nutrition_tags": ["베타카로틴", "비타민C", "식이섬유"]},
-    {"name": "당근", "category": "뿌리채소", "nutrition_tags": ["베타카로틴", "식이섬유", "비타민A"]},
-    {"name": "대파", "category": "줄기채소", "nutrition_tags": ["비타민A", "비타민C", "황화합물"]},
-    {"name": "무", "category": "뿌리채소", "nutrition_tags": ["비타민C", "식이섬유", "칼륨"]},
-    {"name": "밤", "category": "씨앗채소", "nutrition_tags": ["탄수화물", "식이섬유", "비타민B1"]},
-    {"name": "브로콜리", "category": "꽃채소", "nutrition_tags": ["비타민C", "식이섬유", "칼슘"]},
-    {"name": "시금치", "category": "잎채소", "nutrition_tags": ["비타민A", "철분", "엽산"]},
-    {"name": "아스파라거스", "category": "줄기채소", "nutrition_tags": ["엽산", "비타민K", "식이섬유"]},
-    {"name": "양배추", "category": "잎채소", "nutrition_tags": ["비타민C", "식이섬유", "비타민K"]},
-    {"name": "양파", "category": "기타채소", "nutrition_tags": ["퀘르세틴", "황화합물", "식이섬유"]},
-    {"name": "연근", "category": "기타채소", "nutrition_tags": ["식이섬유", "비타민C", "철분"]},
-    {"name": "옥수수", "category": "씨앗채소", "nutrition_tags": ["식이섬유", "비타민B1", "엽산"]},
-    {"name": "청경채", "category": "잎채소", "nutrition_tags": ["비타민A", "칼슘", "철분"]},
-    {"name": "콩나물", "category": "줄기채소", "nutrition_tags": ["비타민C", "엽산", "단백질"]},
-    {"name": "토마토", "category": "열매채소", "nutrition_tags": ["리코펜", "비타민C", "칼륨"]},
-    {"name": "팽이", "category": "버섯", "nutrition_tags": ["식이섬유", "비타민D", "단백질"]},
-    {"name": "표고", "category": "버섯", "nutrition_tags": ["비타민D", "식이섬유", "아연"]},
+    {
+        "name": "가지",
+        "category": "열매채소",
+        "nutrition_tags": ["비타민C", "칼륨", "식이섬유"],
+    },
+    {
+        "name": "감자",
+        "category": "뿌리채소",
+        "nutrition_tags": ["비타민C", "칼륨", "탄수화물"],
+    },
+    {
+        "name": "고구마",
+        "category": "뿌리채소",
+        "nutrition_tags": ["베타카로틴", "비타민C", "식이섬유"],
+    },
+    {
+        "name": "단호박",
+        "category": "열매채소",
+        "nutrition_tags": ["베타카로틴", "비타민C", "식이섬유"],
+    },
+    {
+        "name": "당근",
+        "category": "뿌리채소",
+        "nutrition_tags": ["베타카로틴", "식이섬유", "비타민A"],
+    },
+    {
+        "name": "대파",
+        "category": "줄기채소",
+        "nutrition_tags": ["비타민A", "비타민C", "황화합물"],
+    },
+    {
+        "name": "무",
+        "category": "뿌리채소",
+        "nutrition_tags": ["비타민C", "식이섬유", "칼륨"],
+    },
+    {
+        "name": "밤",
+        "category": "씨앗채소",
+        "nutrition_tags": ["탄수화물", "식이섬유", "비타민B1"],
+    },
+    {
+        "name": "브로콜리",
+        "category": "꽃채소",
+        "nutrition_tags": ["비타민C", "식이섬유", "칼슘"],
+    },
+    {
+        "name": "시금치",
+        "category": "잎채소",
+        "nutrition_tags": ["비타민A", "철분", "엽산"],
+    },
+    {
+        "name": "아스파라거스",
+        "category": "줄기채소",
+        "nutrition_tags": ["엽산", "비타민K", "식이섬유"],
+    },
+    {
+        "name": "양배추",
+        "category": "잎채소",
+        "nutrition_tags": ["비타민C", "식이섬유", "비타민K"],
+    },
+    {
+        "name": "양파",
+        "category": "기타채소",
+        "nutrition_tags": ["퀘르세틴", "황화합물", "식이섬유"],
+    },
+    {
+        "name": "연근",
+        "category": "기타채소",
+        "nutrition_tags": ["식이섬유", "비타민C", "철분"],
+    },
+    {
+        "name": "옥수수",
+        "category": "씨앗채소",
+        "nutrition_tags": ["식이섬유", "비타민B1", "엽산"],
+    },
+    {
+        "name": "청경채",
+        "category": "잎채소",
+        "nutrition_tags": ["비타민A", "칼슘", "철분"],
+    },
+    {
+        "name": "콩나물",
+        "category": "줄기채소",
+        "nutrition_tags": ["비타민C", "엽산", "단백질"],
+    },
+    {
+        "name": "토마토",
+        "category": "열매채소",
+        "nutrition_tags": ["리코펜", "비타민C", "칼륨"],
+    },
+    {
+        "name": "팽이",
+        "category": "버섯",
+        "nutrition_tags": ["식이섬유", "비타민D", "단백질"],
+    },
+    {
+        "name": "표고",
+        "category": "버섯",
+        "nutrition_tags": ["비타민D", "식이섬유", "아연"],
+    },
 ]
 
 # Nutrition tags description
@@ -49,7 +127,7 @@ nutrition_tags_info = {
     "베타카로틴": "비타민A의 전구체이며 항산화 작용을 하는 영양소",
     "리코펜": "항산화 작용을 하는 카로티노이드 계열의 영양소",
     "퀘르세틴": "항산화, 항염증 작용을 하는 플라보노이드",
-    "황화합물": "항균, 항산화 작용을 하는 화합물"
+    "황화합물": "항균, 항산화 작용을 하는 화합물",
 }
 
 
@@ -60,7 +138,9 @@ def seed_database():
         category_map = {}  # To store category id mapping
 
         for category_name in unique_categories:
-            category = Category(name=category_name, description=f"{category_name} 종류의 채소들")
+            category = Category(
+                name=category_name, description=f"{category_name} 종류의 채소들"
+            )
             session.add(category)
             session.commit()
             session.refresh(category)
@@ -79,8 +159,7 @@ def seed_database():
         for veg in vegetables_data:
             # Create ingredient
             ingredient = Ingredient(
-                name=veg["name"],
-                category_id=category_map[veg["category"]]
+                name=veg["name"], category_id=category_map[veg["category"]]
             )
             session.add(ingredient)
             session.commit()
@@ -90,7 +169,7 @@ def seed_database():
             for tag_name in veg["nutrition_tags"][:3]:  # Limit to first 3 tags
                 link = IngredientNutritionLink(
                     ingredient_id=ingredient.id,
-                    nutrition_tag_id=nutrition_tag_map[tag_name]
+                    nutrition_tag_id=nutrition_tag_map[tag_name],
                 )
                 session.add(link)
 

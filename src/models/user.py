@@ -18,6 +18,7 @@ class UserBase(SQLModel):
     created_datetime: datetime = Field(default_factory=datetime.utcnow)
     updated_datetime: datetime = Field(default_factory=datetime.utcnow)
 
+
 class User(UserBase, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     hashed_password: str
@@ -28,6 +29,3 @@ class User(UserBase, table=True):
     @staticmethod
     def get_password_hash(password: str) -> str:
         return pwd_context.hash(password)
-
-
-

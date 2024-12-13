@@ -11,8 +11,12 @@ router = APIRouter()
 
 
 @router.post("/", response_model=Category)
-def create_category(*, session: Session = Depends(get_session), category: Category,
-                    current_user: User = Depends(get_current_superuser)):
+def create_category(
+    *,
+    session: Session = Depends(get_session),
+    category: Category,
+    current_user: User = Depends(get_current_superuser),
+):
     session.add(category)
     session.commit()
     session.refresh(category)
@@ -21,10 +25,10 @@ def create_category(*, session: Session = Depends(get_session), category: Catego
 
 @router.get("/", response_model=List[Category])
 def read_categories(
-        *,
-        session: Session = Depends(get_session),
-        offset: int = 0,
-        limit: int = Query(default=100, lte=100),
+    *,
+    session: Session = Depends(get_session),
+    offset: int = 0,
+    limit: int = Query(default=100, lte=100),
 ):
     categories = session.exec(select(Category).offset(offset).limit(limit)).all()
     return categories
@@ -40,8 +44,11 @@ def read_category(*, session: Session = Depends(get_session), category_id: int):
 
 @router.patch("/{category_id}", response_model=Category)
 def update_category(
-        *, session: Session = Depends(get_session), category_id: int, category: Category,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    category_id: int,
+    category: Category,
+    current_user: User = Depends(get_current_superuser),
 ):
     db_category = session.get(Category, category_id)
     if not db_category:
@@ -58,8 +65,12 @@ def update_category(
 
 
 @router.delete("/{category_id}")
-def delete_category(*, session: Session = Depends(get_session), category_id: int,
-                    current_user: User = Depends(get_current_superuser)):
+def delete_category(
+    *,
+    session: Session = Depends(get_session),
+    category_id: int,
+    current_user: User = Depends(get_current_superuser),
+):
     category = session.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")

@@ -19,9 +19,9 @@ def create_timer(timer: Timer, session: Session = Depends(get_session)):
 
 @router.get("/", response_model=List[Timer])
 def read_timers(
-        session: Session = Depends(get_session),
-        skip: int = 0,
-        limit: int = Query(default=100, le=100),
+    session: Session = Depends(get_session),
+    skip: int = 0,
+    limit: int = Query(default=100, le=100),
 ):
     timers = session.exec(select(Timer).offset(skip).limit(limit)).all()
     return timers
@@ -37,9 +37,7 @@ def read_timer(timer_id: int, session: Session = Depends(get_session)):
 
 @router.put("/{timer_id}", response_model=Timer)
 def update_timer(
-        timer_id: int,
-        timer_update: Timer,
-        session: Session = Depends(get_session)
+    timer_id: int, timer_update: Timer, session: Session = Depends(get_session)
 ):
     db_timer = session.get(Timer, timer_id)
     if not db_timer:

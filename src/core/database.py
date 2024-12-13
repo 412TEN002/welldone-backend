@@ -3,8 +3,19 @@ from sqlmodel import Session, select
 
 from core.config import settings
 from core.enums import UserRole
-from models.common import Category, Ingredient, CookingSettingTip, CookingSetting, CookingMethod, CookingTool, \
-    HeatingMethod, Timer, Feedback, NutritionTag, IngredientNutritionLink
+from models.common import (
+    Category,
+    Ingredient,
+    CookingSettingTip,
+    CookingSetting,
+    CookingMethod,
+    CookingTool,
+    HeatingMethod,
+    Timer,
+    TimerFeedback,
+    NutritionTag,
+    IngredientNutritionLink,
+)
 from models.user import User
 
 if settings.ENVIRONMENT == "local":
@@ -33,7 +44,7 @@ async def init_db(session: Session, engine: Engine) -> None:
     CookingSetting.metadata.create_all(engine)
     CookingSettingTip.metadata.create_all(engine)
     CookingTool.metadata.create_all(engine)
-    Feedback.metadata.create_all(engine)
+    TimerFeedback.metadata.create_all(engine)
     HeatingMethod.metadata.create_all(engine)
     IngredientNutritionLink.metadata.create_all(engine)
     NutritionTag.metadata.create_all(engine)
@@ -52,7 +63,7 @@ async def init_db(session: Session, engine: Engine) -> None:
             username="admin",
             hashed_password=User.get_password_hash("admin123"),
             role=UserRole.SUPERUSER,
-            is_active=True
+            is_active=True,
         )
         session.add(default_superuser)
 

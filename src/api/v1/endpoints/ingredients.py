@@ -14,12 +14,12 @@ router = APIRouter()
 
 @router.get("/search", response_model=List[IngredientResponse])
 def search_ingredients(
-        *,
-        session: Session = Depends(get_session),
-        keyword: str = Query(..., min_length=1),
-        category_id: Optional[int] = None,
-        skip: int = 0,
-        limit: int = Query(default=100, lte=100),
+    *,
+    session: Session = Depends(get_session),
+    keyword: str = Query(..., min_length=1),
+    category_id: Optional[int] = None,
+    skip: int = 0,
+    limit: int = Query(default=100, lte=100),
 ):
     """
     재료를 검색합니다.
@@ -48,8 +48,12 @@ def search_ingredients(
 
 
 @router.post("/", response_model=Ingredient)
-def create_ingredient(*, session: Session = Depends(get_session), ingredient: Ingredient,
-                      current_user: User = Depends(get_current_superuser)):
+def create_ingredient(
+    *,
+    session: Session = Depends(get_session),
+    ingredient: Ingredient,
+    current_user: User = Depends(get_current_superuser),
+):
     session.add(ingredient)
     session.commit()
     session.refresh(ingredient)
@@ -58,10 +62,10 @@ def create_ingredient(*, session: Session = Depends(get_session), ingredient: In
 
 @router.get("/", response_model=List[IngredientResponse])
 def read_ingredients(
-        *,
-        session: Session = Depends(get_session),
-        offset: int = 0,
-        limit: int = Query(default=100, lte=100),
+    *,
+    session: Session = Depends(get_session),
+    offset: int = 0,
+    limit: int = Query(default=100, lte=100),
 ):
     ingredients = session.exec(select(Ingredient).offset(offset).limit(limit)).all()
     return ingredients
@@ -77,8 +81,11 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
 def update_ingredient(
-        *, session: Session = Depends(get_session), ingredient_id: int, ingredient: Ingredient,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    ingredient_id: int,
+    ingredient: Ingredient,
+    current_user: User = Depends(get_current_superuser),
 ):
     db_ingredient = session.get(Ingredient, ingredient_id)
     if not db_ingredient:
@@ -95,8 +102,12 @@ def update_ingredient(
 
 
 @router.delete("/{ingredient_id}")
-def delete_ingredient(*, session: Session = Depends(get_session), ingredient_id: int,
-                      current_user: User = Depends(get_current_superuser)):
+def delete_ingredient(
+    *,
+    session: Session = Depends(get_session),
+    ingredient_id: int,
+    current_user: User = Depends(get_current_superuser),
+):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
@@ -108,11 +119,11 @@ def delete_ingredient(*, session: Session = Depends(get_session), ingredient_id:
 
 @router.post("/{ingredient_id}/tags/{tag_id}")
 def add_nutrition_tag(
-        *,
-        session: Session = Depends(get_session),
-        ingredient_id: int,
-        tag_id: int,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    ingredient_id: int,
+    tag_id: int,
+    current_user: User = Depends(get_current_superuser),
 ):
     # 재료 확인
     ingredient = session.get(Ingredient, ingredient_id)
@@ -126,36 +137,32 @@ def add_nutrition_tag(
 
     # 현재 태그 수 확인
     current_tags = session.exec(
-        select(IngredientNutritionLink)
-        .where(IngredientNutritionLink.ingredient_id == ingredient_id)
+        select(IngredientNutritionLink).where(
+            IngredientNutritionLink.ingredient_id == ingredient_id
+        )
     ).all()
 
     if len(current_tags) >= 3:
         raise HTTPException(
-            status_code=400,
-            detail="Maximum number of nutrition tags (3) reached"
+            status_code=400, detail="Maximum number of nutrition tags (3) reached"
         )
 
     # 이미 존재하는 태그인지 확인
     existing_link = session.exec(
-        select(IngredientNutritionLink)
-        .where(
+        select(IngredientNutritionLink).where(
             IngredientNutritionLink.ingredient_id == ingredient_id,
-            IngredientNutritionLink.nutrition_tag_id == tag_id
+            IngredientNutritionLink.nutrition_tag_id == tag_id,
         )
     ).first()
 
     if existing_link:
         raise HTTPException(
             status_code=400,
-            detail="This nutrition tag is already added to the ingredient"
+            detail="This nutrition tag is already added to the ingredient",
         )
 
     # 새 태그 연결 추가
-    link = IngredientNutritionLink(
-        ingredient_id=ingredient_id,
-        nutrition_tag_id=tag_id
-    )
+    link = IngredientNutritionLink(ingredient_id=ingredient_id, nutrition_tag_id=tag_id)
     session.add(link)
     session.commit()
 
@@ -164,25 +171,23 @@ def add_nutrition_tag(
 
 @router.delete("/{ingredient_id}/tags/{tag_id}")
 def remove_nutrition_tag(
-        *,
-        session: Session = Depends(get_session),
-        ingredient_id: int,
-        tag_id: int,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    ingredient_id: int,
+    tag_id: int,
+    current_user: User = Depends(get_current_superuser),
 ):
     # 연결 확인
     link = session.exec(
-        select(IngredientNutritionLink)
-        .where(
+        select(IngredientNutritionLink).where(
             IngredientNutritionLink.ingredient_id == ingredient_id,
-            IngredientNutritionLink.nutrition_tag_id == tag_id
+            IngredientNutritionLink.nutrition_tag_id == tag_id,
         )
     ).first()
 
     if not link:
         raise HTTPException(
-            status_code=404,
-            detail="Nutrition tag not found for this ingredient"
+            status_code=404, detail="Nutrition tag not found for this ingredient"
         )
 
     # 연결 삭제
@@ -194,9 +199,7 @@ def remove_nutrition_tag(
 
 @router.get("/{ingredient_id}/tags", response_model=List[NutritionTag])
 def read_ingredient_nutrition_tags(
-        *,
-        session: Session = Depends(get_session),
-        ingredient_id: int
+    *, session: Session = Depends(get_session), ingredient_id: int
 ):
     # 재료 확인
     ingredient = session.get(Ingredient, ingredient_id)

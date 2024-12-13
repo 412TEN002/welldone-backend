@@ -19,6 +19,9 @@ pydantic = { extras = ["email"], version = "^2.10.3" }
 python-multipart = "^0.0.19"
 bcrypt = "4.0.1"
 
+[tool.poetry.group.dev.dependencies]
+black = "^24.10.0"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

@@ -4,8 +4,12 @@ from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
 from models.common import (
-    Ingredient, CookingMethod, CookingTool, HeatingMethod,
-    CookingSetting, CookingSettingTip
+    Ingredient,
+    CookingMethod,
+    CookingTool,
+    HeatingMethod,
+    CookingSetting,
+    CookingSettingTip,
 )
 
 cooking_settings_data = [
@@ -19,8 +23,8 @@ cooking_settings_data = [
         "tips": [
             "가지는 깨끗이 씻어 2cm 두께로 동글하게 썰어주세요.",
             "예열된 팬에 기름을 두르고 중간 불에서 앞뒤로 노릇하게 구워주세요.",
-            "너무 오래 구우면 가지가 질겨질 수 있어요."
-        ]
+            "너무 오래 구우면 가지가 질겨질 수 있어요.",
+        ],
     }
 ]
 
@@ -42,14 +46,16 @@ def validate_data_exists(session: Session) -> tuple[bool, Dict[str, Set[str]]]:
     required_ingredients = {data["ingredient"] for data in cooking_settings_data}
     required_methods = {data["cooking_method"] for data in cooking_settings_data}
     required_tools = {data["cooking_tool"] for data in cooking_settings_data}
-    required_heating_methods = {data["heating_method"] for data in cooking_settings_data}
+    required_heating_methods = {
+        data["heating_method"] for data in cooking_settings_data
+    }
 
     # 없는 데이터 찾기
     missing_data = {
         "ingredients": required_ingredients - existing_ingredients,
         "cooking_methods": required_methods - existing_methods,
         "cooking_tools": required_tools - existing_tools,
-        "heating_methods": required_heating_methods - existing_heating_methods
+        "heating_methods": required_heating_methods - existing_heating_methods,
     }
 
     # 모든 데이터가 존재하는지 확인
@@ -84,8 +90,12 @@ def seed_cooking_settings(session: Session):
                 cooking_method_id=cooking_methods[data["cooking_method"]],
                 cooking_tool_id=cooking_tools[data["cooking_tool"]],
                 heating_method_id=heating_methods[data["heating_method"]],
-                temperature=float(data["temperature"]) if data.get("temperature") else None,
-                cooking_time=int(data["cooking_time"]) if data.get("cooking_time") else None
+                temperature=(
+                    float(data["temperature"]) if data.get("temperature") else None
+                ),
+                cooking_time=(
+                    int(data["cooking_time"]) if data.get("cooking_time") else None
+                ),
             )
             session.add(setting)
             session.flush()  # Get setting.id
@@ -94,8 +104,7 @@ def seed_cooking_settings(session: Session):
             for tip in data.get("tips", []):
                 if tip.strip():
                     tip_obj = CookingSettingTip(
-                        cooking_setting_id=setting.id,
-                        message=tip.strip()
+                        cooking_setting_id=setting.id, message=tip.strip()
                     )
                     session.add(tip_obj)
 

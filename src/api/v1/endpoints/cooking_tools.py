@@ -11,8 +11,12 @@ router = APIRouter()
 
 
 @router.post("/", response_model=CookingTool)
-def create_cooking_tool(*, session: Session = Depends(get_session), cooking_tool: CookingTool,
-                        current_user: User = Depends(get_current_superuser)):
+def create_cooking_tool(
+    *,
+    session: Session = Depends(get_session),
+    cooking_tool: CookingTool,
+    current_user: User = Depends(get_current_superuser),
+):
     session.add(cooking_tool)
     session.commit()
     session.refresh(cooking_tool)
@@ -21,10 +25,10 @@ def create_cooking_tool(*, session: Session = Depends(get_session), cooking_tool
 
 @router.get("/", response_model=List[CookingTool])
 def read_cooking_tools(
-        *,
-        session: Session = Depends(get_session),
-        offset: int = 0,
-        limit: int = Query(default=100, lte=100),
+    *,
+    session: Session = Depends(get_session),
+    offset: int = 0,
+    limit: int = Query(default=100, lte=100),
 ):
     tools = session.exec(select(CookingTool).offset(offset).limit(limit)).all()
     return tools
@@ -40,8 +44,11 @@ def read_cooking_tool(*, session: Session = Depends(get_session), tool_id: int):
 
 @router.patch("/{tool_id}", response_model=CookingTool)
 def update_cooking_tool(
-        *, session: Session = Depends(get_session), tool_id: int, cooking_tool: CookingTool,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    tool_id: int,
+    cooking_tool: CookingTool,
+    current_user: User = Depends(get_current_superuser),
 ):
     db_tool = session.get(CookingTool, tool_id)
     if not db_tool:
@@ -58,8 +65,12 @@ def update_cooking_tool(
 
 
 @router.delete("/{tool_id}")
-def delete_cooking_tool(*, session: Session = Depends(get_session), tool_id: int,
-                        current_user: User = Depends(get_current_superuser)):
+def delete_cooking_tool(
+    *,
+    session: Session = Depends(get_session),
+    tool_id: int,
+    current_user: User = Depends(get_current_superuser),
+):
     tool = session.get(CookingTool, tool_id)
     if not tool:
         raise HTTPException(status_code=404, detail="Cooking tool not found")

@@ -18,14 +18,10 @@ class IngredientNutritionLink(SQLModel, table=True):
     __tablename__ = "ingredient_nutrition_link"
 
     ingredient_id: Optional[int] = Field(
-        default=None,
-        foreign_key="ingredient.id",
-        primary_key=True
+        default=None, foreign_key="ingredient.id", primary_key=True
     )
     nutrition_tag_id: Optional[int] = Field(
-        default=None,
-        foreign_key="nutritiontag.id",
-        primary_key=True
+        default=None, foreign_key="nutritiontag.id", primary_key=True
     )
 
 
@@ -36,8 +32,7 @@ class NutritionTag(SQLModel, table=True):
 
     # Relationships
     ingredients: List["Ingredient"] = Relationship(
-        back_populates="nutrition_tags",
-        link_model=IngredientNutritionLink
+        back_populates="nutrition_tags", link_model=IngredientNutritionLink
     )
 
 
@@ -52,14 +47,13 @@ class Ingredient(SQLModel, table=True):
     category: Optional["Category"] = Relationship(back_populates="ingredients")
     cooking_settings: List["CookingSetting"] = Relationship(back_populates="ingredient")
     nutrition_tags: List[NutritionTag] = Relationship(
-        back_populates="ingredients",
-        link_model=IngredientNutritionLink
+        back_populates="ingredients", link_model=IngredientNutritionLink
     )
 
     def __init__(self, **data):
         # name이 제공되면 자동으로 초성 생성
-        if 'name' in data and 'chosung' not in data:
-            data['chosung'] = get_chosung(data['name'])
+        if "name" in data and "chosung" not in data:
+            data["chosung"] = get_chosung(data["name"])
         super().__init__(**data)
 
 
@@ -70,7 +64,9 @@ class CookingMethod(SQLModel, table=True):
     icon_url: Optional[str] = None
 
     # Relationships
-    cooking_settings: List["CookingSetting"] = Relationship(back_populates="cooking_method")
+    cooking_settings: List["CookingSetting"] = Relationship(
+        back_populates="cooking_method"
+    )
 
 
 class CookingTool(SQLModel, table=True):
@@ -80,7 +76,9 @@ class CookingTool(SQLModel, table=True):
     icon_url: Optional[str] = None
 
     # Relationships
-    cooking_settings: List["CookingSetting"] = Relationship(back_populates="cooking_tool")
+    cooking_settings: List["CookingSetting"] = Relationship(
+        back_populates="cooking_tool"
+    )
 
 
 class HeatingMethod(SQLModel, table=True):
@@ -90,7 +88,9 @@ class HeatingMethod(SQLModel, table=True):
     icon_url: Optional[str] = None
 
     # Relationships
-    cooking_settings: List["CookingSetting"] = Relationship(back_populates="heating_method")
+    cooking_settings: List["CookingSetting"] = Relationship(
+        back_populates="heating_method"
+    )
 
 
 class CookingSetting(SQLModel, table=True):
@@ -126,10 +126,10 @@ class Timer(SQLModel, table=True):
 
     # Relationships
     cooking_setting: CookingSetting = Relationship(back_populates="timers")
-    feedbacks: List["Feedback"] = Relationship(back_populates="timer")
+    feedbacks: List["TimerFeedback"] = Relationship(back_populates="timer")
 
 
-class Feedback(SQLModel, table=True):
+class TimerFeedback(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     timer_id: int = Field(foreign_key="timer.id")
     comment: Optional[str] = None
@@ -137,3 +137,8 @@ class Feedback(SQLModel, table=True):
 
     # Relationships
     timer: Timer = Relationship(back_populates="feedbacks")
+
+
+class IngredientRequestFeedback(SQLModel, table=True):
+    id: Optional[int] = Field(default=None, primary_key=True)
+    comment: Optional[str] = None

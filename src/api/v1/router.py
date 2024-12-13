@@ -15,12 +15,22 @@ from core.config import settings
 api_router = APIRouter(prefix=settings.API_V1_STR)
 
 api_router.include_router(categories_router, prefix="/categories", tags=["categories"])
-api_router.include_router(cooking_methods_router, prefix="/cooking-methods", tags=["cooking-methods"])
-api_router.include_router(cooking_tools_router, prefix="/cooking-tools", tags=["cooking-tools"])
-api_router.include_router(ingredients_router, prefix="/ingredients", tags=["ingredients"])
+api_router.include_router(
+    cooking_methods_router, prefix="/cooking-methods", tags=["cooking-methods"]
+)
+api_router.include_router(
+    cooking_tools_router, prefix="/cooking-tools", tags=["cooking-tools"]
+)
+api_router.include_router(
+    ingredients_router, prefix="/ingredients", tags=["ingredients"]
+)
 api_router.include_router(feedback_router, prefix="/feedback", tags=["feedback"])
-api_router.include_router(heating_methods_router, prefix="/heating-methods", tags=["heating-methods"])
+api_router.include_router(
+    heating_methods_router, prefix="/heating-methods", tags=["heating-methods"]
+)
 api_router.include_router(timers_router, prefix="/timers", tags=["timers"])
-api_router.include_router(cooking_settings_router, prefix="/cooking-settings", tags=["cooking-settings"])
+api_router.include_router(
+    cooking_settings_router, prefix="/cooking-settings", tags=["cooking-settings"]
+)
 api_router.include_router(users_router, prefix="/users", tags=["users"])
 api_router.include_router(auth_router, prefix="/auth", tags=["auth"])

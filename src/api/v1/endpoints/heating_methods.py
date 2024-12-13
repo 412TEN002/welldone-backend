@@ -11,8 +11,12 @@ router = APIRouter()
 
 
 @router.post("/", response_model=HeatingMethod)
-def create_heating_method(*, session: Session = Depends(get_session), heating_method: HeatingMethod,
-                          current_user: User = Depends(get_current_superuser)):
+def create_heating_method(
+    *,
+    session: Session = Depends(get_session),
+    heating_method: HeatingMethod,
+    current_user: User = Depends(get_current_superuser),
+):
     session.add(heating_method)
     session.commit()
     session.refresh(heating_method)
@@ -21,10 +25,10 @@ def create_heating_method(*, session: Session = Depends(get_session), heating_me
 
 @router.get("/", response_model=List[HeatingMethod])
 def read_heating_methods(
-        *,
-        session: Session = Depends(get_session),
-        offset: int = 0,
-        limit: int = Query(default=100, lte=100),
+    *,
+    session: Session = Depends(get_session),
+    offset: int = 0,
+    limit: int = Query(default=100, lte=100),
 ):
     methods = session.exec(select(HeatingMethod).offset(offset).limit(limit)).all()
     return methods
@@ -40,8 +44,11 @@ def read_heating_method(*, session: Session = Depends(get_session), method_id: i
 
 @router.patch("/{method_id}", response_model=HeatingMethod)
 def update_heating_method(
-        *, session: Session = Depends(get_session), method_id: int, heating_method: HeatingMethod,
-        current_user: User = Depends(get_current_superuser)
+    *,
+    session: Session = Depends(get_session),
+    method_id: int,
+    heating_method: HeatingMethod,
+    current_user: User = Depends(get_current_superuser),
 ):
     db_method = session.get(HeatingMethod, method_id)
     if not db_method:
@@ -58,8 +65,12 @@ def update_heating_method(
 
 
 @router.delete("/{method_id}")
-def delete_heating_method(*, session: Session = Depends(get_session), method_id: int,
-                          current_user: User = Depends(get_current_superuser)):
+def delete_heating_method(
+    *,
+    session: Session = Depends(get_session),
+    method_id: int,
+    current_user: User = Depends(get_current_superuser),
+):
     method = session.get(HeatingMethod, method_id)
     if not method:
         raise HTTPException(status_code=404, detail="Heating method not found")

@@ -5,8 +5,27 @@ JAMO_END_LETTER = 55203
 JAMO_CYCLES = 588
 
 # 초성 리스트
-CHOSUNG_LIST = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ',
-                'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ']
+CHOSUNG_LIST = [
+    "ㄱ",
+    "ㄲ",
+    "ㄴ",
+    "ㄷ",
+    "ㄸ",
+    "ㄹ",
+    "ㅁ",
+    "ㅂ",
+    "ㅃ",
+    "ㅅ",
+    "ㅆ",
+    "ㅇ",
+    "ㅈ",
+    "ㅉ",
+    "ㅊ",
+    "ㅋ",
+    "ㅌ",
+    "ㅍ",
+    "ㅎ",
+]
 
 
 def get_chosung(text: str) -> str:
@@ -15,13 +34,13 @@ def get_chosung(text: str) -> str:
     """
     result = []
     for char in text:
-        if '가' <= char <= '힣':
+        if "가" <= char <= "힣":
             char_code = ord(char) - JAMO_START_LETTER
             char_code = char_code // JAMO_CYCLES
             result.append(CHOSUNG_LIST[char_code])
         else:
             result.append(char)
-    return ''.join(result)
+    return "".join(result)
 
 
 def is_chosung(keyword: str) -> bool:
