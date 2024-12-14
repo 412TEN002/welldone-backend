@@ -63,38 +63,33 @@ class ObjectStorage:
             self,
             file: UploadFile,
             folder: str = "ingredients",
-            base_width: int = 100
+            base_width: int = 100,
+            is_home: bool = False
     ) -> Optional[dict]:
         try:
             contents = await file.read()
-
-            # 파일 타입 확인
             kind = filetype.guess(contents)
             if not kind or not kind.mime.startswith('image/'):
                 raise ValueError("Not an image file")
 
-            # 원본 이미지 로드
             image = Image.open(BytesIO(contents))
 
-            # 기본 파일명 생성 (확장자 제외)
+            # 홈화면용 이미지는 다른 경로에 저장
+            if is_home:
+                folder = f"home/{folder}"
+
             base_filename = self._generate_filename(file.filename, folder)
             filename_without_ext, ext = os.path.splitext(base_filename)
 
-            # 각 사이즈별로 이미지 업로드
             urls = {}
             for size_name, multiplier in self.size_configs.items():
-                # 이미지 리사이징
                 resized = self._resize_image(image, base_width, multiplier)
-
-                # BytesIO로 변환
                 buffer = BytesIO()
                 resized.save(buffer, format=image.format)
                 buffer.seek(0)
 
-                # 파일명 생성
                 filename = f"{filename_without_ext}_{size_name.value}{ext}"
 
-                # S3에 업로드
                 self.s3.put_object(
                     Bucket=self.bucket,
                     Key=filename,
@@ -103,7 +98,6 @@ class ObjectStorage:
                     ACL='public-read'
                 )
 
-                # URL 저장
                 urls[size_name] = f"https://{self.bucket}.kr.object.ncloudstorage.com/{filename}"
 
             return {
@@ -115,23 +109,28 @@ class ObjectStorage:
             print(f"Error uploading file: {str(e)}")
             return None
 
-    def delete_image(self, key: str) -> bool:
-        """모든 사이즈의 이미지 삭제"""
+    def delete_image(self, key: str, is_home: bool = False) -> bool:
+        """이미지 삭제 (홈화면용 또는 일반 이미지)"""
         try:
-            # 파일 확장자 찾기
-            for obj in self.s3.list_objects(Bucket=self.bucket, Prefix=key)['Contents']:
-                if obj['Key'].startswith(key):
-                    ext = os.path.splitext(obj['Key'])[1]
-                    break
+            folder = "home/ingredients" if is_home else "ingredients"
+            prefix = f"{folder}/{key}"
 
-            # 각 사이즈별 이미지 삭제
-            for size in ImageSize:
-                filename = f"{key}_{size}{ext}"
-                self.s3.delete_object(
+            try:
+                # 해당 폴더에서 이미지 찾기
+                objects = self.s3.list_objects(
                     Bucket=self.bucket,
-                    Key=filename
+                    Prefix=prefix
                 )
-            return True
+                if 'Contents' in objects:
+                    for obj in objects['Contents']:
+                        self.s3.delete_object(
+                            Bucket=self.bucket,
+                            Key=obj['Key']
+                        )
+                return True
+            except Exception as e:
+                print(f"Error deleting from {folder}: {str(e)}")
+                return False
 
         except Exception as e:
             print(f"Error deleting file: {str(e)}")

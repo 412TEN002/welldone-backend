@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
 
@@ -42,37 +42,30 @@ class CookingSettingResponse(BaseModel):
 
 
 class IngredientResponse(BaseModel):
-    id: int
+    id: Optional[int]
     name: str
-    category: Optional[CategoryResponse] = None
-
+    chosung: str
+    category_id: Optional[int] = None
+    color_theme: ColorTheme
     icon_key: Optional[str] = None
-    icon_urls: Optional[dict] = None
+    home_icon_urls: Optional[Dict[str, str]] = None
+    icon_urls: Optional[Dict[str, str]] = None
 
-    model_config = ConfigDict(from_attributes=True)
-
-    @model_validator(mode='after')
-    def generate_icon_urls(self):
-        if self.icon_key:
-            self.icon_urls = object_storage.get_image_urls(self.icon_key)
-        return self
+    class Config:
+        from_attributes = True
 
 
 class IngredientSearchResponse(BaseModel):
-    id: int
+    id: Optional[int]
     name: str
-    category: Optional[CategoryResponse] = None
-
+    chosung: str
+    category_id: Optional[int] = None
+    color_theme: ColorTheme
     icon_key: Optional[str] = None
-    icon_urls: Optional[dict] = None
+    icon_urls: Optional[Dict[str, str]] = None
 
-    model_config = ConfigDict(from_attributes=True)
-
-    @model_validator(mode='after')
-    def generate_icon_urls(self):
-        if self.icon_key:
-            self.icon_urls = object_storage.get_image_urls(self.icon_key)
-        return self
+    class Config:
+        from_attributes = True
 
 
 class CookingToolResponse(BaseModel):
