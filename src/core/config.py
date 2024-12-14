@@ -25,5 +25,11 @@ class Settings(BaseSettings):
     # POSTGRES_PASSWORD: str
     # POSTGRES_DB: str = ""
 
+    NAVER_CLOUD_ACCESS_KEY: str
+    NAVER_CLOUD_SECRET_KEY: str
+    NAVER_CLOUD_ENDPOINT: str
+    NAVER_CLOUD_REGION: str
+    NAVER_CLOUD_BUCKET: str
+
 
 settings = Settings()

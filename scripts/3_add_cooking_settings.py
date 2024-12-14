@@ -1,32 +1,78 @@
+import csv
 from typing import Dict, Set
 
 from sqlalchemy import create_engine
 from sqlmodel import Session, select
 
+from core.enums import TipType
 from models.common import (
     Ingredient,
-    CookingMethod,
     CookingTool,
-    HeatingMethod,
     CookingSetting,
     CookingSettingTip,
 )
 
-cooking_settings_data = [
-    {
-        "ingredient": "가지",
-        "cooking_method": "찌기",
-        "cooking_tool": "냄비 / 프라이팬",
-        "heating_method": "인덕션 / 가스레인지",
-        "temperature": "6",
-        "cooking_time": "180",
-        "tips": [
-            "가지는 깨끗이 씻어 2cm 두께로 동글하게 썰어주세요.",
-            "예열된 팬에 기름을 두르고 중간 불에서 앞뒤로 노릇하게 구워주세요.",
-            "너무 오래 구우면 가지가 질겨질 수 있어요.",
-        ],
-    }
-]
+
+def convert_time_to_seconds(time_str: str) -> str:
+    """
+    Convert time string (MM:SS) to seconds
+    """
+    try:
+        minutes, seconds = map(int, time_str.split(':'))
+        return str(minutes * 60 + seconds)
+    except ValueError:
+        return time_str
+
+
+def parse_csv_to_cooking_settings(file_path: str):
+    """
+    Parse CSV file and convert to cooking settings data structure
+    """
+    cooking_settings_data = []
+
+    # Read the CSV file
+    with open(file_path, 'r', encoding='utf-8') as csvfile:
+        # Skip the header row
+        next(csvfile)
+
+        # Read the rows
+        reader = csv.reader(csvfile)
+
+        # Group rows by ingredient and cooking tool
+        grouped_rows = {}
+
+        for row in reader:
+            if len(row) < 7:  # Skip any incomplete rows
+                continue
+
+            ingredient, cooking_tool = row[0], row[1]
+            key = (ingredient, cooking_tool)
+
+            if key not in grouped_rows:
+                grouped_rows[key] = {
+                    'ingredient': ingredient,
+                    'cooking_tool': cooking_tool,
+                    'temperature': row[2],
+                    'cooking_time': convert_time_to_seconds(row[3]),
+                    'tips': []
+                }
+
+            # Collect tips
+            tip_types = [TipType.PREPARATION, TipType.COOKING, TipType.FINISHING]
+            for i, tip_type in enumerate([row[4], row[5], row[6]]):
+                if tip_type.strip():
+                    grouped_rows[key]['tips'].append({
+                        'tip_type': tip_types[i],
+                        'message': tip_type.strip()
+                    })
+
+        # Convert to list
+        cooking_settings_data = list(grouped_rows.values())
+
+    return cooking_settings_data
+
+
+cooking_settings_data = parse_csv_to_cooking_settings('./scripts/cooking_settings.csv')
 
 
 def validate_data_exists(session: Session) -> tuple[bool, Dict[str, Set[str]]]:
@@ -38,24 +84,16 @@ def validate_data_exists(session: Session) -> tuple[bool, Dict[str, Set[str]]]:
     """
     # 데이터베이스에서 현재 존재하는 데이터 조회
     existing_ingredients = {i.name for i in session.exec(select(Ingredient))}
-    existing_methods = {m.name for m in session.exec(select(CookingMethod))}
     existing_tools = {t.name for t in session.exec(select(CookingTool))}
-    existing_heating_methods = {h.name for h in session.exec(select(HeatingMethod))}
 
     # 데이터에서 필요한 값들 추출
     required_ingredients = {data["ingredient"] for data in cooking_settings_data}
-    required_methods = {data["cooking_method"] for data in cooking_settings_data}
     required_tools = {data["cooking_tool"] for data in cooking_settings_data}
-    required_heating_methods = {
-        data["heating_method"] for data in cooking_settings_data
-    }
 
     # 없는 데이터 찾기
     missing_data = {
         "ingredients": required_ingredients - existing_ingredients,
-        "cooking_methods": required_methods - existing_methods,
         "cooking_tools": required_tools - existing_tools,
-        "heating_methods": required_heating_methods - existing_heating_methods,
     }
 
     # 모든 데이터가 존재하는지 확인
@@ -76,9 +114,7 @@ def seed_cooking_settings(session: Session):
 
     # 기존 매핑 데이터 가져오기
     ingredients = {i.name: i.id for i in session.exec(select(Ingredient))}
-    cooking_methods = {m.name: m.id for m in session.exec(select(CookingMethod))}
     cooking_tools = {t.name: t.id for t in session.exec(select(CookingTool))}
-    heating_methods = {h.name: h.id for h in session.exec(select(HeatingMethod))}
 
     try:
         # Process each setting
@@ -87,11 +123,9 @@ def seed_cooking_settings(session: Session):
 
             setting = CookingSetting(
                 ingredient_id=ingredients[data["ingredient"]],
-                cooking_method_id=cooking_methods[data["cooking_method"]],
                 cooking_tool_id=cooking_tools[data["cooking_tool"]],
-                heating_method_id=heating_methods[data["heating_method"]],
                 temperature=(
-                    float(data["temperature"]) if data.get("temperature") else None
+                    int(data["temperature"]) if data.get("temperature") else None
                 ),
                 cooking_time=(
                     int(data["cooking_time"]) if data.get("cooking_time") else None
@@ -102,9 +136,9 @@ def seed_cooking_settings(session: Session):
 
             # Add tips
             for tip in data.get("tips", []):
-                if tip.strip():
+                if tip.get('message', '').strip():
                     tip_obj = CookingSettingTip(
-                        cooking_setting_id=setting.id, message=tip.strip()
+                        cooking_setting_id=setting.id, message=tip['message'], tip_type=tip['tip_type']
                     )
                     session.add(tip_obj)
 

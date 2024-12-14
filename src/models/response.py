@@ -1,8 +1,11 @@
 from datetime import datetime
 from typing import Optional, List
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
 
+from core.enums import ColorTheme
+from core.s3 import object_storage
+from models.common import CookingSettingTip
 from models.user import UserRole
 
 
@@ -10,6 +13,16 @@ class CategoryResponse(BaseModel):
     id: int
     name: str
     description: Optional[str] = None
+    icon_key: Optional[str] = None
+    icon_urls: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def generate_icon_urls(self):
+        if self.icon_key:
+            self.icon_urls = object_storage.get_image_urls(self.icon_key)
+        return self
 
 
 class NutritionTagResponse(BaseModel):
@@ -20,17 +33,62 @@ class NutritionTagResponse(BaseModel):
 
 class CookingSettingResponse(BaseModel):
     id: int
-    temperature: Optional[float] = None
-    cooking_time: Optional[int] = None
+    ingredient: "IngredientResponse"
+    cooking_tool: "CookingToolResponse"
+    temperature: int
+    cooking_time: int
+    color_theme: ColorTheme
+    tips: List[CookingSettingTip]
 
 
 class IngredientResponse(BaseModel):
     id: int
     name: str
-    icon_url: Optional[str] = None
     category: Optional[CategoryResponse] = None
-    cooking_settings: List[CookingSettingResponse] = []
-    nutrition_tags: List[NutritionTagResponse] = []
+
+    icon_key: Optional[str] = None
+    icon_urls: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def generate_icon_urls(self):
+        if self.icon_key:
+            self.icon_urls = object_storage.get_image_urls(self.icon_key)
+        return self
+
+
+class IngredientSearchResponse(BaseModel):
+    id: int
+    name: str
+    category: Optional[CategoryResponse] = None
+
+    icon_key: Optional[str] = None
+    icon_urls: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def generate_icon_urls(self):
+        if self.icon_key:
+            self.icon_urls = object_storage.get_image_urls(self.icon_key)
+        return self
+
+
+class CookingToolResponse(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    icon_key: Optional[str] = None
+    icon_urls: Optional[dict] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode='after')
+    def generate_icon_urls(self):
+        if self.icon_key:
+            self.icon_urls = object_storage.get_image_urls(self.icon_key)
+        return self
 
 
 class UserCreate(BaseModel):

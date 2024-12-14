@@ -1,25 +1,26 @@
 from typing import List, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File
 from sqlmodel import select, Session
 
 from api.v1.deps import get_session, get_current_superuser
+from core.s3 import object_storage
 from models.common import Ingredient, IngredientNutritionLink, NutritionTag
-from models.response import IngredientResponse
+from models.response import IngredientResponse, IngredientSearchResponse
 from models.user import User
 from utils.utils import is_chosung
 
 router = APIRouter()
 
 
-@router.get("/search", response_model=List[IngredientResponse])
+@router.get("/search", response_model=List[IngredientSearchResponse])
 def search_ingredients(
-    *,
-    session: Session = Depends(get_session),
-    keyword: str = Query(..., min_length=1),
-    category_id: Optional[int] = None,
-    skip: int = 0,
-    limit: int = Query(default=100, lte=100),
+        *,
+        session: Session = Depends(get_session),
+        keyword: str = Query(..., min_length=1),
+        category_id: Optional[int] = None,
+        skip: int = 0,
+        limit: int = Query(default=100, lte=100),
 ):
     """
     재료를 검색합니다.
@@ -49,10 +50,10 @@ def search_ingredients(
 
 @router.post("/", response_model=Ingredient)
 def create_ingredient(
-    *,
-    session: Session = Depends(get_session),
-    ingredient: Ingredient,
-    current_user: User = Depends(get_current_superuser),
+        *,
+        session: Session = Depends(get_session),
+        ingredient: Ingredient,
+        current_user: User = Depends(get_current_superuser),
 ):
     session.add(ingredient)
     session.commit()
@@ -62,10 +63,10 @@ def create_ingredient(
 
 @router.get("/", response_model=List[IngredientResponse])
 def read_ingredients(
-    *,
-    session: Session = Depends(get_session),
-    offset: int = 0,
-    limit: int = Query(default=100, lte=100),
+        *,
+        session: Session = Depends(get_session),
+        offset: int = 0,
+        limit: int = Query(default=100, lte=100),
 ):
     ingredients = session.exec(select(Ingredient).offset(offset).limit(limit)).all()
     return ingredients
@@ -81,11 +82,11 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
 def update_ingredient(
-    *,
-    session: Session = Depends(get_session),
-    ingredient_id: int,
-    ingredient: Ingredient,
-    current_user: User = Depends(get_current_superuser),
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        ingredient: Ingredient,
+        current_user: User = Depends(get_current_superuser),
 ):
     db_ingredient = session.get(Ingredient, ingredient_id)
     if not db_ingredient:
@@ -103,10 +104,10 @@ def update_ingredient(
 
 @router.delete("/{ingredient_id}")
 def delete_ingredient(
-    *,
-    session: Session = Depends(get_session),
-    ingredient_id: int,
-    current_user: User = Depends(get_current_superuser),
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        current_user: User = Depends(get_current_superuser),
 ):
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
@@ -119,11 +120,11 @@ def delete_ingredient(
 
 @router.post("/{ingredient_id}/tags/{tag_id}")
 def add_nutrition_tag(
-    *,
-    session: Session = Depends(get_session),
-    ingredient_id: int,
-    tag_id: int,
-    current_user: User = Depends(get_current_superuser),
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        tag_id: int,
+        current_user: User = Depends(get_current_superuser),
 ):
     # 재료 확인
     ingredient = session.get(Ingredient, ingredient_id)
@@ -171,11 +172,11 @@ def add_nutrition_tag(
 
 @router.delete("/{ingredient_id}/tags/{tag_id}")
 def remove_nutrition_tag(
-    *,
-    session: Session = Depends(get_session),
-    ingredient_id: int,
-    tag_id: int,
-    current_user: User = Depends(get_current_superuser),
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        tag_id: int,
+        current_user: User = Depends(get_current_superuser),
 ):
     # 연결 확인
     link = session.exec(
@@ -199,7 +200,7 @@ def remove_nutrition_tag(
 
 @router.get("/{ingredient_id}/tags", response_model=List[NutritionTag])
 def read_ingredient_nutrition_tags(
-    *, session: Session = Depends(get_session), ingredient_id: int
+        *, session: Session = Depends(get_session), ingredient_id: int
 ):
     # 재료 확인
     ingredient = session.get(Ingredient, ingredient_id)
@@ -208,3 +209,60 @@ def read_ingredient_nutrition_tags(
 
     # 연결된 태그 조회
     return ingredient.nutrition_tags
+
+
+@router.post("/{ingredient_id}/icon")
+async def upload_ingredient_icon(
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        file: UploadFile = File(...),
+        current_user: User = Depends(get_current_superuser),
+):
+    """재료 아이콘 이미지 업로드"""
+    ingredient = session.get(Ingredient, ingredient_id)
+    if not ingredient:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+
+    # 기존 이미지가 있다면 삭제
+    if ingredient.icon_key:
+        object_storage.delete_image(ingredient.icon_key)
+
+    # 새 이미지 업로드 (여러 사이즈)
+    result = await object_storage.upload_image(file, folder="ingredients", base_width=100)
+    if not result:
+        raise HTTPException(status_code=400, detail="Failed to upload image")
+
+    # DB 업데이트 (key만 저장)
+    ingredient.icon_key = result["key"]
+    session.add(ingredient)
+    session.commit()
+    session.refresh(ingredient)
+
+    # 응답에는 모든 URL 포함
+    return {"icon_urls": result["urls"]}
+
+
+@router.delete("/{ingredient_id}/icon")
+async def delete_ingredient_icon(
+        *,
+        session: Session = Depends(get_session),
+        ingredient_id: int,
+        current_user: User = Depends(get_current_superuser),
+):
+    """재료 아이콘 이미지 삭제"""
+    ingredient = session.get(Ingredient, ingredient_id)
+    if not ingredient:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+
+    if not ingredient.icon_key:
+        raise HTTPException(status_code=404, detail="Icon not found")
+
+    # Object Storage에서 모든 사이즈의 이미지 삭제
+    if object_storage.delete_image(ingredient.icon_key):
+        ingredient.icon_key = None
+        session.add(ingredient)
+        session.commit()
+        return {"message": "Icon deleted successfully"}
+
+    raise HTTPException(status_code=500, detail="Failed to delete icon")

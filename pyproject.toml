@@ -18,6 +18,9 @@ pyjwt = "^2.10.1"
 pydantic = { extras = ["email"], version = "^2.10.3" }
 python-multipart = "^0.0.19"
 bcrypt = "4.0.1"
+boto3 = "^1.35.80"
+filetype = "^1.2.0"
+pillow = "^11.0.0"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.10.0"
