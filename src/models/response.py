@@ -5,7 +5,7 @@ from pydantic import BaseModel, EmailStr, ConfigDict, model_validator
 
 from core.enums import ColorTheme
 from core.s3 import object_storage
-from models.common import CookingSettingTip
+from models.common import CookingSettingTip, NutritionTag
 from models.user import UserRole
 
 
@@ -44,11 +44,10 @@ class CookingSettingResponse(BaseModel):
 class IngredientResponse(BaseModel):
     id: Optional[int]
     name: str
-    chosung: str
     category_id: Optional[int] = None
     color_theme: ColorTheme
     home_icon_urls: Optional[Dict[str, str]] = None
-    icon_urls: Optional[Dict[str, str]] = None
+    nutrition_tags: List[NutritionTag] = []
 
     class Config:
         from_attributes = True
@@ -57,9 +56,7 @@ class IngredientResponse(BaseModel):
 class IngredientSearchResponse(BaseModel):
     id: Optional[int]
     name: str
-    chosung: str
     category_id: Optional[int] = None
-    color_theme: ColorTheme
     icon_urls: Optional[Dict[str, str]] = None
 
     class Config:

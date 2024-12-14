@@ -1,5 +1,6 @@
 from sqlmodel import Session, create_engine
 
+from core.enums import ColorTheme
 from models.common import Category, Ingredient, NutritionTag, IngredientNutritionLink
 
 # SQLite database URL
@@ -41,6 +42,7 @@ vegetables_data = [
         "name": "무",
         "category": "뿌리채소",
         "nutrition_tags": ["비타민C", "칼륨", "식이섬유"],
+        "color_theme": "WHITE"
     },
     {
         "name": "밤",
@@ -91,6 +93,7 @@ vegetables_data = [
         "name": "콩나물",
         "category": "줄기채소",
         "nutrition_tags": ["비타민C", "엽산", "단백질"],
+        "color_theme": "WHITE"
     },
     {
         "name": "토마토",
@@ -101,6 +104,7 @@ vegetables_data = [
         "name": "팽이",
         "category": "버섯",
         "nutrition_tags": ["나이아신", "리신", "항산화"],
+        "color_theme": "WHITE"
     },
     {
         "name": "표고",
@@ -166,7 +170,8 @@ def seed_database():
         for veg in vegetables_data:
             # Create ingredient
             ingredient = Ingredient(
-                name=veg["name"], category_id=category_map[veg["category"]]
+                name=veg["name"], category_id=category_map[veg["category"]],
+                color_theme=ColorTheme.BLACK if veg.get("color_theme") != "WHITE" else ColorTheme.WHITE
             )
             session.add(ingredient)
             session.commit()

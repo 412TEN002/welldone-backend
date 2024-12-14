@@ -5,9 +5,7 @@ from sqlalchemy.orm import selectinload
 from sqlmodel import select, Session
 
 from api.v1.deps import get_session, get_current_superuser
-from core.enums import ColorTheme
 from models.common import CookingSetting, CookingSettingTip
-from models.response import CookingSettingResponse, CookingToolResponse, IngredientResponse
 from models.user import User
 
 router = APIRouter()
@@ -62,35 +60,6 @@ def read_cooking_settings_with_tips(
     }
 
     return setting_dict
-
-
-@router.get("/{cooking_setting_id}", response_model=CookingSettingResponse)
-def read_cooking_setting(
-        *,
-        session: Session = Depends(get_session),
-        cooking_setting_id: int,
-):
-    setting = session.get(CookingSetting, cooking_setting_id)
-    if not setting:
-        raise HTTPException(status_code=404, detail="Cooking setting not found")
-
-    return CookingSettingResponse(
-        id=setting.id,
-        ingredient=IngredientResponse(
-            id=setting.ingredient.id,
-            name=setting.ingredient.name,
-            icon_urls=setting.ingredient.icon_urls if hasattr(setting.ingredient, 'icon_urls') else None
-        ),
-        cooking_tool=CookingToolResponse(
-            id=setting.cooking_tool.id,
-            name=setting.cooking_tool.name,
-            icon_urls=setting.cooking_tool.icon_urls if hasattr(setting.cooking_tool, 'icon_urls') else None
-        ),
-        tips=[{"id": tip.id, "message": tip.message} for tip in setting.tips] if setting.tips else [],
-        temperature=setting.temperature,
-        cooking_time=setting.cooking_time,
-        color_theme=ColorTheme.NEUTRAL  # 기본값 설정. 실제 로직에 맞게 수정 필요
-    )
 
 
 @router.patch("/{cooking_setting_id}", response_model=CookingSetting)
