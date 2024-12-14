@@ -4,6 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from sqlmodel import Session, select
+from starlette.middleware.cors import CORSMiddleware
 
 from api.v1.router import api_router
 from core.config import settings
@@ -43,3 +44,11 @@ app = FastAPI(
 )
 
 app.include_router(api_router)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
