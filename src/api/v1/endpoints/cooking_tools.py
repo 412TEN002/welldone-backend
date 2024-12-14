@@ -90,28 +90,28 @@ async def upload_cooking_tool_icon(
         file: UploadFile = File(...),
         current_user: User = Depends(get_current_superuser),
 ):
-    """요리 도구 아이콘 이미지 업로드"""
+    """요리 도구 아이콘 SVG 업로드"""
     tool = session.get(CookingTool, tool_id)
     if not tool:
         raise HTTPException(status_code=404, detail="Cooking tool not found")
 
     # 기존 이미지가 있다면 삭제
-    if tool.icon_key:
-        object_storage.delete_image(tool.icon_key)
+    if tool.icon_url:
+        key = tool.icon_url.split('/')[-1]
+        object_storage.delete_image(key)
 
-    # 새 이미지 업로드 (여러 사이즈)
-    result = await object_storage.upload_image(file, folder="cooking_tools", base_width=200)  # 카테고리와 동일한 기본 크기 사용
+    # 새 이미지 업로드
+    result = await object_storage.upload_image(file, folder="cooking_tools")
     if not result:
         raise HTTPException(status_code=400, detail="Failed to upload image")
 
-    # DB 업데이트 (key만 저장)
-    tool.icon_key = result["key"]
+    # DB 업데이트
+    tool.icon_url = result["url"]
     session.add(tool)
     session.commit()
     session.refresh(tool)
 
-    # 응답에는 모든 URL 포함
-    return {"icon_urls": result["urls"]}
+    return {"icon_url": tool.icon_url}
 
 
 @router.delete("/{tool_id}/icon")
@@ -121,17 +121,18 @@ async def delete_cooking_tool_icon(
         tool_id: int,
         current_user: User = Depends(get_current_superuser),
 ):
-    """요리 도구 아이콘 이미지 삭제"""
+    """요리 도구 아이콘 삭제"""
     tool = session.get(CookingTool, tool_id)
     if not tool:
         raise HTTPException(status_code=404, detail="Cooking tool not found")
 
-    if not tool.icon_key:
+    if not tool.icon_url:
         raise HTTPException(status_code=404, detail="Icon not found")
 
-    # Object Storage에서 모든 사이즈의 이미지 삭제
-    if object_storage.delete_image(tool.icon_key):
-        tool.icon_key = None
+    # Object Storage에서 이미지 삭제
+    key = tool.icon_url.split('/')[-1]
+    if object_storage.delete_image(key):
+        tool.icon_url = None
         session.add(tool)
         session.commit()
         return {"message": "Icon deleted successfully"}

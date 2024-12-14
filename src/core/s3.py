@@ -1,16 +1,11 @@
-import os
 import uuid
-from io import BytesIO
 from typing import Optional
 
 import boto3
-from PIL import Image
 from botocore.config import Config
 from fastapi import UploadFile
-from filetype import filetype
 
 from core.config import settings
-from core.enums import ImageSize
 
 
 class ObjectStorage:
@@ -32,77 +27,42 @@ class ObjectStorage:
             )
         )
 
-        self.size_configs = {
-            ImageSize.X1: 1,
-            ImageSize.X2: 2,
-            ImageSize.X3: 3
-        }
-
     def _generate_filename(self, original_filename: str, folder: str) -> str:
-        """생성된 UUID와 원본 파일 확장자로 새로운 파일명 생성"""
-        _, ext = os.path.splitext(original_filename)
-        return f"{folder}/{uuid.uuid4()}{ext}"
-
-    def _resize_image(
-            self,
-            image: Image,
-            base_width: int,
-            size_multiplier: int
-    ) -> Image:
-        """이미지 리사이징"""
-        if size_multiplier == 1:
-            return image
-
-        new_width = base_width * size_multiplier
-        ratio = new_width / float(image.size[0])
-        new_height = int(float(image.size[1]) * ratio)
-
-        return image.resize((new_width, new_height), Image.Resampling.LANCZOS)
+        """생성된 UUID로 새로운 파일명 생성"""
+        return f"{folder}/{uuid.uuid4()}.svg"
 
     async def upload_image(
             self,
             file: UploadFile,
             folder: str = "ingredients",
-            base_width: int = 100,
             is_home: bool = False
     ) -> Optional[dict]:
         try:
             contents = await file.read()
-            kind = filetype.guess(contents)
-            if not kind or not kind.mime.startswith('image/'):
-                raise ValueError("Not an image file")
 
-            image = Image.open(BytesIO(contents))
+            # SVG 파일 검증
+            if not file.filename.lower().endswith('.svg'):
+                raise ValueError("Only SVG files are allowed")
 
             # 홈화면용 이미지는 다른 경로에 저장
             if is_home:
                 folder = f"home/{folder}"
 
-            base_filename = self._generate_filename(file.filename, folder)
-            filename_without_ext, ext = os.path.splitext(base_filename)
+            filename = self._generate_filename(file.filename, folder)
 
-            urls = {}
-            for size_name, multiplier in self.size_configs.items():
-                resized = self._resize_image(image, base_width, multiplier)
-                buffer = BytesIO()
-                resized.save(buffer, format=image.format)
-                buffer.seek(0)
+            self.s3.put_object(
+                Bucket=self.bucket,
+                Key=filename,
+                Body=contents,
+                ContentType='image/svg+xml',
+                ACL='public-read'
+            )
 
-                filename = f"{filename_without_ext}_{size_name.value}{ext}"
-
-                self.s3.put_object(
-                    Bucket=self.bucket,
-                    Key=filename,
-                    Body=buffer.getvalue(),
-                    ContentType=kind.mime,
-                    ACL='public-read'
-                )
-
-                urls[size_name] = f"https://{self.bucket}.kr.object.ncloudstorage.com/{filename}"
+            url = f"https://{self.bucket}.kr.object.ncloudstorage.com/{filename}"
 
             return {
-                "key": filename_without_ext,
-                "urls": urls
+                "key": filename,
+                "url": url
             }
 
         except Exception as e:
@@ -110,44 +70,16 @@ class ObjectStorage:
             return None
 
     def delete_image(self, key: str, is_home: bool = False) -> bool:
-        """이미지 삭제 (홈화면용 또는 일반 이미지)"""
+        """이미지 삭제"""
         try:
-            folder = "home/ingredients" if is_home else "ingredients"
-            prefix = f"{folder}/{key}"
-
-            try:
-                # 해당 폴더에서 이미지 찾기
-                objects = self.s3.list_objects(
-                    Bucket=self.bucket,
-                    Prefix=prefix
-                )
-                if 'Contents' in objects:
-                    for obj in objects['Contents']:
-                        self.s3.delete_object(
-                            Bucket=self.bucket,
-                            Key=obj['Key']
-                        )
-                return True
-            except Exception as e:
-                print(f"Error deleting from {folder}: {str(e)}")
-                return False
-
+            self.s3.delete_object(
+                Bucket=self.bucket,
+                Key=key
+            )
+            return True
         except Exception as e:
             print(f"Error deleting file: {str(e)}")
             return False
-
-    def get_image_urls(self, key: str) -> Optional[dict]:
-        """저장된 이미지의 각 크기별 URL 반환"""
-        if not key:
-            return None
-
-        base_url = f"https://{self.bucket}.kr.object.ncloudstorage.com"
-
-        return {
-            "1x": f"{base_url}/{key}_{ImageSize.X1.value}.png",
-            "2x": f"{base_url}/{key}_{ImageSize.X2.value}.png",
-            "3x": f"{base_url}/{key}_{ImageSize.X3.value}.png"
-        }
 
 
 # 싱글톤 인스턴스

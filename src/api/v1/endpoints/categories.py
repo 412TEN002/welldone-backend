@@ -90,28 +90,28 @@ async def upload_category_icon(
         file: UploadFile = File(...),
         current_user: User = Depends(get_current_superuser),
 ):
-    """카테고리 아이콘 이미지 업로드"""
+    """카테고리 아이콘 SVG 업로드"""
     category = session.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
     # 기존 이미지가 있다면 삭제
-    if category.icon_key:
-        object_storage.delete_image(category.icon_key)
+    if category.icon_url:
+        key = category.icon_url.split('/')[-1]
+        object_storage.delete_image(key)
 
-    # 새 이미지 업로드 (여러 사이즈)
-    result = await object_storage.upload_image(file, folder="categories", base_width=200)  # 카테고리는 더 큰 기본 크기 사용
+    # 새 이미지 업로드
+    result = await object_storage.upload_image(file, folder="categories")
     if not result:
         raise HTTPException(status_code=400, detail="Failed to upload image")
 
-    # DB 업데이트 (key만 저장)
-    category.icon_key = result["key"]
+    # DB 업데이트
+    category.icon_url = result["url"]
     session.add(category)
     session.commit()
     session.refresh(category)
 
-    # 응답에는 모든 URL 포함
-    return {"icon_urls": result["urls"]}
+    return {"icon_url": category.icon_url}
 
 
 @router.delete("/{category_id}/icon")
@@ -121,17 +121,18 @@ async def delete_category_icon(
         category_id: int,
         current_user: User = Depends(get_current_superuser),
 ):
-    """카테고리 아이콘 이미지 삭제"""
+    """카테고리 아이콘 삭제"""
     category = session.get(Category, category_id)
     if not category:
         raise HTTPException(status_code=404, detail="Category not found")
 
-    if not category.icon_key:
+    if not category.icon_url:
         raise HTTPException(status_code=404, detail="Icon not found")
 
-    # Object Storage에서 모든 사이즈의 이미지 삭제
-    if object_storage.delete_image(category.icon_key):
-        category.icon_key = None
+    # Object Storage에서 이미지 삭제
+    key = category.icon_url.split('/')[-1]
+    if object_storage.delete_image(key):
+        category.icon_url = None
         session.add(category)
         session.commit()
         return {"message": "Icon deleted successfully"}

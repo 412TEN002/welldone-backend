@@ -1,6 +1,5 @@
-from typing import Optional, List, Dict
+from typing import Optional, List
 
-from sqlalchemy import Column, JSON
 from sqlmodel import SQLModel, Field, Relationship
 
 from core.enums import TipType, TimerFeedbackType, ColorTheme
@@ -13,7 +12,7 @@ class Category(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     description: Optional[str] = None
-    icon_key: Optional[str] = None
+    icon_url: Optional[str] = None
 
     # Relationships
     ingredients: List["Ingredient"] = Relationship(back_populates="category")
@@ -51,8 +50,8 @@ class Ingredient(SQLModel, table=True):
     chosung: str = Field(index=True)
     category_id: Optional[int] = Field(default=None, foreign_key="categories.id")
     color_theme: ColorTheme = Field(default=ColorTheme.BLACK)
-    icon_urls: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSON))
-    home_icon_urls: Optional[Dict[str, str]] = Field(default=None, sa_column=Column(JSON))
+    icon_url: Optional[str] = None
+    home_icon_url: Optional[str] = None
 
     # Relationships
     category: Optional["Category"] = Relationship(back_populates="ingredients")
@@ -87,7 +86,7 @@ class CookingTool(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     name: str = Field(unique=True)
     description: Optional[str] = None
-    icon_key: Optional[str] = None
+    icon_url: Optional[str] = None
 
     # Relationships
     cooking_settings: List["CookingSetting"] = Relationship(
