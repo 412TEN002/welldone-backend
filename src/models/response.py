@@ -47,7 +47,6 @@ class IngredientResponse(BaseModel):
     chosung: str
     category_id: Optional[int] = None
     color_theme: ColorTheme
-    icon_key: Optional[str] = None
     home_icon_urls: Optional[Dict[str, str]] = None
     icon_urls: Optional[Dict[str, str]] = None
 
@@ -61,7 +60,6 @@ class IngredientSearchResponse(BaseModel):
     chosung: str
     category_id: Optional[int] = None
     color_theme: ColorTheme
-    icon_key: Optional[str] = None
     icon_urls: Optional[Dict[str, str]] = None
 
     class Config:

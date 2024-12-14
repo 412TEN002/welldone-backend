@@ -13,6 +13,19 @@ from utils.utils import is_chosung
 router = APIRouter()
 
 
+@router.post("/", response_model=Ingredient)
+def create_ingredient(
+        *,
+        session: Session = Depends(get_session),
+        ingredient: Ingredient,
+        current_user: User = Depends(get_current_superuser),
+):
+    session.add(ingredient)
+    session.commit()
+    session.refresh(ingredient)
+    return ingredient
+
+
 @router.get("/search", response_model=List[IngredientSearchResponse])
 def search_ingredients(
         *,
@@ -36,27 +49,8 @@ def search_ingredients(
     query = query.offset(skip).limit(limit)
     ingredients = session.exec(query).all()
 
-    response_ingredients = []
-    for ingredient in ingredients:
-        ingredient_dict = ingredient.__dict__
-        if ingredient.icon_key:
-            ingredient_dict["icon_urls"] = object_storage.get_image_urls(ingredient.icon_key)
-        response_ingredients.append(IngredientSearchResponse.model_validate(ingredient_dict))
-
-    return response_ingredients
-
-
-@router.post("/", response_model=Ingredient)
-def create_ingredient(
-        *,
-        session: Session = Depends(get_session),
-        ingredient: Ingredient,
-        current_user: User = Depends(get_current_superuser),
-):
-    session.add(ingredient)
-    session.commit()
-    session.refresh(ingredient)
-    return ingredient
+    # DB에 저장된 URL들을 그대로 사용
+    return [IngredientSearchResponse.model_validate(ingredient) for ingredient in ingredients]
 
 
 @router.get("/", response_model=List[IngredientResponse])
@@ -67,18 +61,8 @@ def read_ingredients(
         limit: int = Query(default=100, lte=100),
 ):
     ingredients = session.exec(select(Ingredient).offset(offset).limit(limit)).all()
-
-    response_ingredients = []
-    for ingredient in ingredients:
-        ingredient_dict = ingredient.__dict__
-        if ingredient.icon_key:
-            # Add home icon URLs
-            ingredient_dict["home_icon_urls"] = object_storage.get_image_urls(f"home/{ingredient.icon_key}")
-            # Add regular icon URLs
-            ingredient_dict["icon_urls"] = object_storage.get_image_urls(ingredient.icon_key)
-        response_ingredients.append(IngredientResponse.model_validate(ingredient_dict))
-
-    return response_ingredients
+    # DB에 저장된 URL들을 그대로 사용
+    return [IngredientResponse.model_validate(ingredient) for ingredient in ingredients]
 
 
 @router.get("/{ingredient_id}", response_model=IngredientResponse)
@@ -86,7 +70,9 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
     ingredient = session.get(Ingredient, ingredient_id)
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
-    return ingredient
+
+    # DB에 저장된 URL들을 그대로 사용
+    return IngredientResponse.model_validate(ingredient)
 
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)
@@ -234,8 +220,10 @@ async def upload_ingredient_icon(
         raise HTTPException(status_code=404, detail="Ingredient not found")
 
     # 기존 일반 이미지가 있다면 삭제
-    if ingredient.icon_key:
-        object_storage.delete_image(ingredient.icon_key)
+    if ingredient.icon_urls:
+        # 마지막 URL의 키를 사용해 삭제
+        key = ingredient.icon_urls["3x"].split('/')[-1].split('_')[0]
+        object_storage.delete_image(key)
 
     # 새 이미지 업로드
     result = await object_storage.upload_image(
@@ -248,13 +236,13 @@ async def upload_ingredient_icon(
     if not result:
         raise HTTPException(status_code=400, detail="Failed to upload image")
 
-    # DB 업데이트
-    ingredient.icon_key = result["key"]
+    # DB 업데이트 - 전체 URLs 저장
+    ingredient.icon_urls = result["urls"]
     session.add(ingredient)
     session.commit()
     session.refresh(ingredient)
 
-    return {"icon_urls": result["urls"]}
+    return {"icon_urls": ingredient.icon_urls}
 
 
 @router.post("/{ingredient_id}/home-icon")
@@ -270,11 +258,13 @@ async def upload_ingredient_home_icon(
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
 
-    if not ingredient.icon_key:
+    if not ingredient.icon_urls:
         raise HTTPException(status_code=400, detail="Regular icon must be uploaded first")
 
     # 기존 홈화면 이미지가 있다면 삭제
-    object_storage.delete_image(ingredient.icon_key, is_home=True)
+    if ingredient.home_icon_urls:
+        key = ingredient.home_icon_urls["3x"].split('/')[-1].split('_')[0]
+        object_storage.delete_image(key, is_home=True)
 
     # 새 이미지 업로드
     result = await object_storage.upload_image(
@@ -287,7 +277,13 @@ async def upload_ingredient_home_icon(
     if not result:
         raise HTTPException(status_code=400, detail="Failed to upload image")
 
-    return {"home_icon_urls": result["urls"]}
+    # DB 업데이트 - 전체 URLs 저장
+    ingredient.home_icon_urls = result["urls"]
+    session.add(ingredient)
+    session.commit()
+    session.refresh(ingredient)
+
+    return {"home_icon_urls": ingredient.home_icon_urls}
 
 
 @router.delete("/{ingredient_id}/icon")
@@ -302,12 +298,13 @@ async def delete_ingredient_icon(
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
 
-    if not ingredient.icon_key:
+    if not ingredient.icon_urls:
         raise HTTPException(status_code=404, detail="Icon not found")
 
     # Object Storage에서 일반 이미지 삭제
-    if object_storage.delete_image(ingredient.icon_key):
-        ingredient.icon_key = None
+    key = ingredient.icon_urls["3x"].split('/')[-1].split('_')[0]
+    if object_storage.delete_image(key):
+        ingredient.icon_urls = None
         session.add(ingredient)
         session.commit()
         return {"message": "Icon deleted successfully"}
@@ -327,11 +324,15 @@ async def delete_ingredient_home_icon(
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
 
-    if not ingredient.icon_key:
-        raise HTTPException(status_code=404, detail="Icon not found")
+    if not ingredient.home_icon_urls:
+        raise HTTPException(status_code=404, detail="Home icon not found")
 
     # Object Storage에서 홈화면 이미지 삭제
-    if object_storage.delete_image(ingredient.icon_key, is_home=True):
+    key = ingredient.home_icon_urls["3x"].split('/')[-1].split('_')[0]
+    if object_storage.delete_image(key, is_home=True):
+        ingredient.home_icon_urls = None
+        session.add(ingredient)
+        session.commit()
         return {"message": "Home icon deleted successfully"}
 
     raise HTTPException(status_code=500, detail="Failed to delete home icon")
