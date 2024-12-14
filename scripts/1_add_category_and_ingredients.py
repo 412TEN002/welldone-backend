@@ -10,94 +10,94 @@ engine = create_engine("sqlite:///test.db", connect_args={"check_same_thread": F
 vegetables_data = [
     {
         "name": "가지",
-        "category": "열매채소",
+        "category": "채소",
         "nutrition_tags": ["안토시아닌", "식이섬유", "칼륨"],
     },
     {
         "name": "감자",
-        "category": "뿌리채소",
+        "category": "구황작물",
         "nutrition_tags": ["칼륨", "비타민C", "비타민B6"],
     },
     {
         "name": "고구마",
-        "category": "뿌리채소",
+        "category": "구황작물",
         "nutrition_tags": ["베타카로틴", "비타민C", "칼륨"],
     },
     {
         "name": "단호박",
-        "category": "열매채소",
+        "category": "채소",
         "nutrition_tags": ["베타카로틴", "비타민A", "칼륨"],
     },
     {
         "name": "당근",
-        "category": "뿌리채소",
+        "category": "채소",
         "nutrition_tags": ["베타카로틴", "비타민K", "항산화"],
     },
     {
         "name": "대파",
-        "category": "줄기채소",
+        "category": "채소",
         "nutrition_tags": ["비타민C", "칼슘"],
     },
     {
         "name": "무",
-        "category": "뿌리채소",
+        "category": "채소",
         "nutrition_tags": ["비타민C", "칼륨", "식이섬유"],
         "color_theme": "WHITE"
     },
     {
         "name": "밤",
-        "category": "씨앗채소",
+        "category": "구황작물",
         "nutrition_tags": ["비타민B6", "마그네슘", "식이섬유"],
     },
     {
         "name": "브로콜리",
-        "category": "꽃채소",
+        "category": "채소",
         "nutrition_tags": ["비타민C", "비타민K", "항산화"],
     },
     {
         "name": "시금치",
-        "category": "잎채소",
+        "category": "채소",
         "nutrition_tags": ["철분", "엽산", "비타민K"],
     },
     {
         "name": "아스파라거스",
-        "category": "줄기채소",
+        "category": "채소",
         "nutrition_tags": ["엽산", "비타민K", "항산화"],
     },
     {
         "name": "양배추",
-        "category": "잎채소",
+        "category": "채소",
         "nutrition_tags": ["비타민K", "비타민C"],
     },
     {
         "name": "양파",
-        "category": "기타채소",
+        "category": "채소",
         "nutrition_tags": ["퀘르세틴", "비타민C", "황화합물"],
     },
     {
         "name": "연근",
-        "category": "기타채소",
+        "category": "채소",
         "nutrition_tags": ["비타민C", "철분", "식이섬유"],
     },
     {
         "name": "옥수수",
-        "category": "씨앗채소",
+        "category": "구황작물",
         "nutrition_tags": ["식이섬유", "비타민B1", "항산화"],
     },
     {
         "name": "청경채",
-        "category": "잎채소",
+        "category": "채소",
         "nutrition_tags": ["비타민A", "칼슘", "항산화"],
     },
     {
         "name": "콩나물",
-        "category": "줄기채소",
+        "category": "채소",
         "nutrition_tags": ["비타민C", "엽산", "단백질"],
         "color_theme": "WHITE"
     },
     {
         "name": "토마토",
-        "category": "열매채소",
+        "category": "채소",
         "nutrition_tags": ["라이코펜", "비타민C", "칼륨"],
     },
     {
@@ -145,10 +145,10 @@ nutrition_tags_info = {
 def seed_database():
     with Session(engine) as session:
         # Create categories first
-        unique_categories = set(veg["category"] for veg in vegetables_data)
+        # unique_categories = set(veg["category"] for veg in vegetables_data)
         category_map = {}  # To store category id mapping
 
-        for category_name in unique_categories:
+        for category_name in ["채소", "버섯", "구황작물"]:
             category = Category(
                 name=category_name, description=f"{category_name} 종류의 채소들"
             )
