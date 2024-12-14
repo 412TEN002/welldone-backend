@@ -39,6 +39,7 @@ class IngredientResponse(BaseModel):
     category_id: Optional[int] = None
     color_theme: ColorTheme
     home_icon_url: Optional[str] = None
+    icon_url: Optional[str] = None
     nutrition_tags: List[NutritionTag] = []
 
     model_config = ConfigDict(from_attributes=True)
