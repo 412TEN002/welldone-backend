@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, Depends, UploadFile, File
+from sqlalchemy import func
 from sqlmodel import select, Session
 
 from api.v1.deps import get_session, get_current_superuser
@@ -59,9 +60,14 @@ def read_ingredients(
         session: Session = Depends(get_session),
         offset: int = 0,
         limit: int = Query(default=100, lte=100),
+        is_random: bool = Query(default=False),
 ):
-    ingredients = session.exec(select(Ingredient).offset(offset).limit(limit)).all()
-    # DB에 저장된 URL들을 그대로 사용
+    if is_random:
+        query = select(Ingredient).order_by(func.random()).limit(limit)
+    else:
+        query = select(Ingredient).offset(offset).limit(limit)
+
+    ingredients = session.exec(query).all()
     return [IngredientResponse.model_validate(ingredient) for ingredient in ingredients]
 
 
