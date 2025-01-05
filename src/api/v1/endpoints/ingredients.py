@@ -6,8 +6,8 @@ from sqlmodel import select, Session
 
 from api.v1.deps import get_session, get_current_superuser
 from core.s3 import object_storage
-from models.common import Ingredient, IngredientNutritionLink, NutritionTag
-from models.response import IngredientResponse, IngredientSearchResponse
+from models.common import Ingredient, IngredientNutritionLink, NutritionTag, CookingTool, CookingSetting
+from models.response import IngredientResponse, IngredientSearchResponse, CookingToolResponse, IngredientListResponse
 from models.user import User
 from utils.utils import is_chosung
 
@@ -54,7 +54,7 @@ def search_ingredients(
     return [IngredientSearchResponse.model_validate(ingredient) for ingredient in ingredients]
 
 
-@router.get("/", response_model=List[IngredientResponse])
+@router.get("/", response_model=List[IngredientListResponse])
 def read_ingredients(
         *,
         session: Session = Depends(get_session),
@@ -77,8 +77,17 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
     if not ingredient:
         raise HTTPException(status_code=404, detail="Ingredient not found")
 
-    # DB에 저장된 URL들을 그대로 사용
-    return IngredientResponse.model_validate(ingredient)
+    cooking_tools = session.exec(
+        select(CookingTool)
+        .join(CookingSetting, CookingTool.id == CookingSetting.cooking_tool_id)
+        .where(CookingSetting.ingredient_id == ingredient_id)
+        .distinct()
+    ).all()
+
+    response = IngredientResponse.model_validate(ingredient)
+    response.available_cooking_tools = [CookingToolResponse.model_validate(tool) for tool in cooking_tools]
+
+    return response
 
 
 @router.patch("/{ingredient_id}", response_model=IngredientResponse)

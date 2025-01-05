@@ -33,6 +33,18 @@ class CookingSettingResponse(BaseModel):
     tips: List[CookingSettingTip]
 
 
+class IngredientListResponse(BaseModel):
+    id: Optional[int]
+    name: str
+    category_id: Optional[int] = None
+    color_theme: ColorTheme
+    home_icon_url: Optional[str] = None
+    icon_url: Optional[str] = None
+    nutrition_tags: List[NutritionTag] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class IngredientResponse(BaseModel):
     id: Optional[int]
     name: str
@@ -41,6 +53,7 @@ class IngredientResponse(BaseModel):
     home_icon_url: Optional[str] = None
     icon_url: Optional[str] = None
     nutrition_tags: List[NutritionTag] = []
+    available_cooking_tools: List["CookingToolResponse"] = []
 
     model_config = ConfigDict(from_attributes=True)
 
