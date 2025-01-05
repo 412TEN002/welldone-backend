@@ -82,6 +82,7 @@ def read_ingredient(*, session: Session = Depends(get_session), ingredient_id: i
         .join(CookingSetting, CookingTool.id == CookingSetting.cooking_tool_id)
         .where(CookingSetting.ingredient_id == ingredient_id)
         .distinct()
+        .order_by(CookingTool.id)  # id 기준 오름차순 정렬
     ).all()
 
     response = IngredientResponse.model_validate(ingredient)
