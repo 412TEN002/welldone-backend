@@ -14,3 +14,7 @@ htmlcov
 /src/tests/api_v1/test.db
 data
 scripts
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
