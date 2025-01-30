@@ -1,10 +1,13 @@
 import logging
+import sys
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.routing import APIRoute
 from sqlmodel import Session, select
 from starlette.middleware.cors import CORSMiddleware
+
+sys.path.append("src")
 
 from api.v1.router import api_router
 from core.config import settings
